@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ===========================================
+// USERS & AUTH
+// ===========================================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String?  @unique
+  displayName  String?
+  passwordHash String
+  role         String   // "TEACHER" or "STUDENT"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  coursesTeaching Course[]     @relation("TeacherCourses")
+  enrollments     Enrollment[]
+  attempts        Attempt[]
+}
+
+// ===========================================
+// COURSES (Materias)
+// ===========================================
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  timezone    String   @default("America/Mexico_City")
+  joinCode    String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacherId   String
+  teacher     User         @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  lessons     Lesson[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+// ===========================================
+// LESSONS (Clases)
+// ===========================================
+
+model Lesson {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  startAt   DateTime
+  endAt     DateTime
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseId   String
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  resources  Resource[]
+  activities Activity[]
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+// ===========================================
+// ACTIVITIES & QUESTIONS
+// ===========================================
+
+model Activity {
+  id         String   @id @default(cuid())
+  title      String
+  timeLimit  Int?
+  basePoints Int      @default(100)
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  lessonId  String
+  lesson    Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions Question[]
+  attempts  Attempt[]
+}
+
+model Question {
+  id             String   @id @default(cuid())
+  type           String   @default("MULTIPLE_CHOICE")
+  prompt         String
+  options        String?  // JSON string: ["A", "B", "C", "D"]
+  correctIndex   Int?
+  expectedAnswer String?
+  timeLimit      Int?
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  answers    Answer[]
+  aiEvals    AIEval[]
+}
+
+// ===========================================
+// ATTEMPTS & ANSWERS
+// ===========================================
+
+model Attempt {
+  id          String    @id @default(cuid())
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  totalScore  Int       @default(0)
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  answers    Answer[]
+}
+
+model Answer {
+  id            String   @id @default(cuid())
+  selectedIndex Int?
+  textAnswer    String?
+  isCorrect     Boolean
+  timeSpent     Int
+  score         Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  attemptId  String
+  attempt    Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+}
+
+// ===========================================
+// AI EVALUATION (STUB)
+// ===========================================
+
+model AIEval {
+  id          String   @id @default(cuid())
+  score       Int?
+  feedback    String?
+  model       String?
+  rawResponse String?
+  createdAt   DateTime @default(now())
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+// ===========================================
+// ATTENDANCE (STUB)
+// ===========================================
+
+model AttendanceSession {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model AttendanceMark {
+  id       String   @id @default(cuid())
+  markedAt DateTime @default(now())
+}
