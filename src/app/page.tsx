@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { CatImage } from '@/components/cat-image'
 import { GraduationCap, Sparkles, Trophy, Users } from 'lucide-react'
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
           <span className="text-2xl font-bold">ClassBland</span>
         </div>
         <div className="flex items-center gap-4">
+          <CatImage />
           <ThemeToggle />
           <Link href="/login">
             <Button variant="ghost">Iniciar Sesion</Button>

@@ -6,6 +6,14 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cataas.com',
+      },
+    ],
+  },
 }
 
 module.exports = nextConfig
