@@ -32,12 +32,13 @@ export function CreateLessonDialog({ courseId, children }: CreateLessonDialogPro
   const [startAt, setStartAt] = useState('')
   const [endAt, setEndAt] = useState('')
 
-  // Default dates: now to 7 days from now
+  // Default dates: today to 7 days from now
   function setDefaults() {
     const now = new Date()
     const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-    setStartAt(now.toISOString().slice(0, 16))
-    setEndAt(weekLater.toISOString().slice(0, 16))
+    // Format as YYYY-MM-DD for date input
+    setStartAt(now.toISOString().slice(0, 10))
+    setEndAt(weekLater.toISOString().slice(0, 10))
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -45,14 +46,19 @@ export function CreateLessonDialog({ courseId, children }: CreateLessonDialogPro
     setIsLoading(true)
 
     try {
+      // Start at 00:00:00 of start date
+      const startDate = new Date(startAt + 'T00:00:00')
+      // End at 23:59:59 of end date
+      const endDate = new Date(endAt + 'T23:59:59')
+
       const res = await fetch(`/api/teacher/courses/${courseId}/lessons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
           content: content || undefined,
-          startAt: new Date(startAt).toISOString(),
-          endAt: new Date(endAt).toISOString(),
+          startAt: startDate.toISOString(),
+          endAt: endDate.toISOString(),
         }),
       })
 
@@ -119,28 +125,31 @@ export function CreateLessonDialog({ courseId, children }: CreateLessonDialogPro
                 disabled={isLoading}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="startAt">Inicia</Label>
+                <Label htmlFor="startAt" className="text-base font-medium">Inicia</Label>
                 <Input
                   id="startAt"
-                  type="datetime-local"
+                  type="date"
                   value={startAt}
                   onChange={(e) => setStartAt(e.target.value)}
                   required
                   disabled={isLoading}
+                  className="h-12 text-base"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endAt">Termina</Label>
+                <Label htmlFor="endAt" className="text-base font-medium">Termina</Label>
                 <Input
                   id="endAt"
-                  type="datetime-local"
+                  type="date"
                   value={endAt}
                   onChange={(e) => setEndAt(e.target.value)}
                   required
                   disabled={isLoading}
+                  className="h-12 text-base"
                 />
+                <p className="text-xs text-muted-foreground">Hasta las 11:59 PM</p>
               </div>
             </div>
           </div>
