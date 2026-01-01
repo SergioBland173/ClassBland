@@ -5,8 +5,9 @@ import { z } from 'zod'
 
 const createQuestionSchema = z.object({
   prompt: z.string().min(2, 'Prompt must be at least 2 characters'),
-  options: z.array(z.string()).min(2).max(6),
-  correctIndex: z.number().int().min(0),
+  type: z.enum(['MULTIPLE_CHOICE', 'OPEN_TEXT', 'IMAGE_CHOICE']).default('MULTIPLE_CHOICE'),
+  options: z.array(z.string()).min(2).max(6).optional(),
+  correctIndex: z.number().int().min(0).optional(),
   timeLimit: z.number().int().positive().optional(),
   order: z.number().int().default(1),
 })
@@ -49,21 +50,30 @@ export async function POST(request: NextRequest, { params }: Props) {
       )
     }
 
-    const { prompt, options, correctIndex, timeLimit, order } = result.data
+    const { prompt, type, options, correctIndex, timeLimit, order } = result.data
 
-    // Validate correctIndex is within options range
-    if (correctIndex >= options.length) {
-      return NextResponse.json(
-        { error: 'correctIndex must be within options range' },
-        { status: 400 }
-      )
+    // Validate options for types that require them
+    if (type !== 'OPEN_TEXT') {
+      if (!options || options.length < 2) {
+        return NextResponse.json(
+          { error: 'Se requieren al menos 2 opciones' },
+          { status: 400 }
+        )
+      }
+      if (correctIndex === undefined || correctIndex >= options.length) {
+        return NextResponse.json(
+          { error: 'correctIndex must be within options range' },
+          { status: 400 }
+        )
+      }
     }
 
     const question = await db.question.create({
       data: {
         prompt,
-        options: JSON.stringify(options),
-        correctIndex,
+        type,
+        options: options ? JSON.stringify(options) : null,
+        correctIndex: correctIndex ?? null,
         timeLimit: timeLimit || null,
         order,
         activityId,
