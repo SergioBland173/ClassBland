@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, createSession, setSessionCookie, canRegister } from '@/lib/auth'
+import { hashPassword, createSession, setSessionCookie } from '@/lib/auth'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -8,7 +8,6 @@ const registerSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   displayName: z.string().min(2, 'Display name must be at least 2 characters').max(50).optional(),
   role: z.enum(['TEACHER', 'STUDENT']),
-  inviteCode: z.string().min(1, 'Invite code is required'),
 })
 
 export async function POST(request: NextRequest) {
@@ -23,15 +22,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, password, displayName, role, inviteCode } = result.data
-
-    // Check if registration is allowed
-    if (!canRegister(email, inviteCode)) {
-      return NextResponse.json(
-        { error: 'Invalid invite code or email not allowed' },
-        { status: 403 }
-      )
-    }
+    const { email, password, displayName, role } = result.data
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({

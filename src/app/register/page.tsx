@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { GraduationCap, Loader2, UserCircle, BookOpen } from 'lucide-react'
+import { GraduationCap, Loader2, UserCircle, BookOpen, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Role = 'TEACHER' | 'STUDENT'
@@ -21,11 +21,22 @@ export default function RegisterPage() {
   const [role, setRole] = useState<Role>('STUDENT')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [displayName, setDisplayName] = useState('')
-  const [inviteCode, setInviteCode] = useState('')
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    if (password !== confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Las contraseñas no coinciden',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -37,7 +48,6 @@ export default function RegisterPage() {
           password,
           displayName: displayName || undefined,
           role,
-          inviteCode,
         }),
       })
 
@@ -171,33 +181,54 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Contrasena</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Minimo 8 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Minimo 8 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  disabled={isLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="inviteCode">Codigo de invitacion</Label>
-              <Input
-                id="inviteCode"
-                type="text"
-                placeholder="Ingresa el codigo proporcionado"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-              <p className="text-xs text-muted-foreground">
-                ClassBland esta en beta cerrada. Necesitas un codigo para registrarte.
-              </p>
+              <Label htmlFor="confirmPassword">Confirmar contrasena</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Repite tu contrasena"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  disabled={isLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
+
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
