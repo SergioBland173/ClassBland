@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ClassBland - Aprende jugando',
+  title: 'CB 07/01/26',
   description: 'Plataforma educativa gamificada para escuelas',
 }
 

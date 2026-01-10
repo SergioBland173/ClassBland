@@ -3,6 +3,8 @@ import { db } from '@/lib/db'
 import { redirect, notFound } from 'next/navigation'
 import { QuizRunner } from '@/components/quiz-runner'
 import { QuizResults } from '@/components/quiz-results'
+import { JoinLiveSessionCard } from '@/components/join-live-session-card'
+import { WaitingForLiveSession } from '@/components/waiting-for-live-session'
 import { isLessonAccessible } from '@/lib/utils'
 
 interface Props {
@@ -46,6 +48,39 @@ export default async function StudentActivityPage({ params }: Props) {
   // Check if lesson is accessible
   if (!isLessonAccessible(activity.lesson.startAt, activity.lesson.endAt)) {
     redirect(`/student/courses/${courseId}`)
+  }
+
+  // If activity is LIVE mode, handle differently
+  if (activity.mode === 'LIVE') {
+    // Check if there's an active live session for this activity
+    const liveSession = await db.liveSession.findFirst({
+      where: {
+        activityId,
+        status: { in: ['WAITING', 'IN_PROGRESS', 'SHOWING_RESULTS'] },
+      },
+    })
+
+    if (liveSession) {
+      // There's an active session - show join card
+      return (
+        <JoinLiveSessionCard
+          roomCode={liveSession.roomCode}
+          activityTitle={activity.title}
+          courseName={activity.lesson.course.name}
+          sessionId={liveSession.id}
+        />
+      )
+    } else {
+      // No active session - show waiting message
+      return (
+        <WaitingForLiveSession
+          activityTitle={activity.title}
+          courseName={activity.lesson.course.name}
+          courseId={courseId}
+          lessonId={lessonId}
+        />
+      )
+    }
   }
 
   // Check for existing completed attempt

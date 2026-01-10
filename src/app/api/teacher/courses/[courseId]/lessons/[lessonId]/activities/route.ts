@@ -7,6 +7,7 @@ const createActivitySchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters').max(200),
   timeLimit: z.number().int().positive().optional(),
   basePoints: z.number().int().min(1).max(1000).default(100),
+  mode: z.enum(['ASYNC', 'LIVE']).default('ASYNC'),
 })
 
 interface Props {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest, { params }: Props) {
       )
     }
 
-    const { title, timeLimit, basePoints } = result.data
+    const { title, timeLimit, basePoints, mode } = result.data
 
     // Get next order
     const lastActivity = await db.activity.findFirst({
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest, { params }: Props) {
         title,
         timeLimit: timeLimit || null,
         basePoints,
+        mode,
         order: (lastActivity?.order || 0) + 1,
         lessonId,
       },

@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreateLessonDialog } from '@/components/create-lesson-dialog'
+import { DeleteLessonButton } from '@/components/delete-lesson-button'
 import { ShareCodeCard } from '@/components/share-code-card'
-import { ArrowLeft, Plus, Clock, Users, Trophy, CheckCircle2, XCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Clock, Users, Trophy } from 'lucide-react'
 import { isLessonAccessible } from '@/lib/utils'
 
 interface Props {
@@ -144,16 +145,23 @@ export default async function CoursePage({ params }: Props) {
                               {lesson.endAt.toLocaleDateString()}
                             </CardDescription>
                           </div>
-                          <div
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              isActive
-                                ? 'bg-success/10 text-success'
-                                : isPast
-                                ? 'bg-muted text-muted-foreground'
-                                : 'bg-warning/10 text-warning'
-                            }`}
-                          >
-                            {isActive ? 'Activa' : isPast ? 'Finalizada' : 'Programada'}
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                isActive
+                                  ? 'bg-success/10 text-success'
+                                  : isPast
+                                  ? 'bg-muted text-muted-foreground'
+                                  : 'bg-warning/10 text-warning'
+                              }`}
+                            >
+                              {isActive ? 'Activa' : isPast ? 'Finalizada' : 'Programada'}
+                            </div>
+                            <DeleteLessonButton
+                              courseId={course.id}
+                              lessonId={lesson.id}
+                              lessonTitle={lesson.title}
+                            />
                           </div>
                         </div>
                       </CardHeader>

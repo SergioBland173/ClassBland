@@ -15,7 +15,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
-import { Loader2 } from 'lucide-react'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Loader2, ClipboardList, Zap } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface CreateActivityDialogProps {
   lessonId: string
@@ -35,6 +37,7 @@ export function CreateActivityDialog({
   const [title, setTitle] = useState('')
   const [timeLimit, setTimeLimit] = useState('')
   const [basePoints, setBasePoints] = useState('100')
+  const [mode, setMode] = useState<'ASYNC' | 'LIVE'>('ASYNC')
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -50,6 +53,7 @@ export function CreateActivityDialog({
             title,
             timeLimit: timeLimit ? parseInt(timeLimit) * 60 : undefined, // Convert minutes to seconds
             basePoints: parseInt(basePoints),
+            mode,
           }),
         }
       )
@@ -70,6 +74,7 @@ export function CreateActivityDialog({
       setTitle('')
       setTimeLimit('')
       setBasePoints('100')
+      setMode('ASYNC')
       router.push(
         `/teacher/courses/${courseId}/lessons/${lessonId}/activities/${data.activity.id}`
       )
@@ -108,6 +113,62 @@ export function CreateActivityDialog({
                 disabled={isLoading}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Tipo de actividad</Label>
+              <RadioGroup
+                value={mode}
+                onValueChange={(value) => setMode(value as 'ASYNC' | 'LIVE')}
+                className="grid grid-cols-2 gap-3"
+                disabled={isLoading}
+              >
+                <Label
+                  htmlFor="mode-async"
+                  className={cn(
+                    'flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all',
+                    mode === 'ASYNC'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <RadioGroupItem value="ASYNC" id="mode-async" className="sr-only" />
+                  <ClipboardList className={cn(
+                    'w-8 h-8',
+                    mode === 'ASYNC' ? 'text-primary' : 'text-muted-foreground'
+                  )} />
+                  <div className="text-center">
+                    <p className={cn(
+                      'font-medium',
+                      mode === 'ASYNC' ? 'text-primary' : 'text-muted-foreground'
+                    )}>Normal</p>
+                    <p className="text-xs text-muted-foreground">Cada estudiante a su ritmo</p>
+                  </div>
+                </Label>
+                <Label
+                  htmlFor="mode-live"
+                  className={cn(
+                    'flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all',
+                    mode === 'LIVE'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <RadioGroupItem value="LIVE" id="mode-live" className="sr-only" />
+                  <Zap className={cn(
+                    'w-8 h-8',
+                    mode === 'LIVE' ? 'text-primary' : 'text-muted-foreground'
+                  )} />
+                  <div className="text-center">
+                    <p className={cn(
+                      'font-medium',
+                      mode === 'LIVE' ? 'text-primary' : 'text-muted-foreground'
+                    )}>En vivo</p>
+                    <p className="text-xs text-muted-foreground">Estilo Kahoot</p>
+                  </div>
+                </Label>
+              </RadioGroup>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="timeLimit">

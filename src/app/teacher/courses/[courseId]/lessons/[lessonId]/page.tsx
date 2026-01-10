@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CreateActivityDialog } from '@/components/create-activity-dialog'
-import { ArrowLeft, Plus, Clock, HelpCircle, Trophy } from 'lucide-react'
+import { ArrowLeft, Plus, Clock, HelpCircle, Trophy, Radio } from 'lucide-react'
 import { isLessonAccessible, formatTime } from '@/lib/utils'
 
 interface Props {
@@ -123,7 +123,15 @@ export default async function LessonPage({ params }: Props) {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg">{activity.title}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">{activity.title}</CardTitle>
+                          {activity.mode === 'LIVE' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-500 border border-red-500/20">
+                              <Radio className="h-3 w-3 animate-pulse" />
+                              EN VIVO
+                            </span>
+                          )}
+                        </div>
                         <CardDescription className="flex items-center gap-4 mt-1">
                           <span className="flex items-center gap-1">
                             <HelpCircle className="h-3 w-3" />

@@ -4,7 +4,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Clock, Play, Trophy, CheckCircle2, HelpCircle } from 'lucide-react'
+import { ArrowLeft, Clock, Play, Trophy, CheckCircle2, HelpCircle, Radio } from 'lucide-react'
 import { isLessonAccessible, formatTime } from '@/lib/utils'
 
 interface Props {
@@ -148,6 +148,12 @@ export default async function StudentLessonPage({ params }: Props) {
                         <div>
                           <CardTitle className="text-lg flex items-center gap-2">
                             {activity.title}
+                            {activity.mode === 'LIVE' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-500 border border-red-500/20">
+                                <Radio className="h-3 w-3 animate-pulse" />
+                                EN VIVO
+                              </span>
+                            )}
                             {isCompleted && (
                               <CheckCircle2 className="h-5 w-5 text-success" />
                             )}

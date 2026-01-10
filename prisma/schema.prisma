@@ -21,9 +21,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  coursesTeaching Course[]     @relation("TeacherCourses")
-  enrollments     Enrollment[]
-  attempts        Attempt[]
+  coursesTeaching    Course[]          @relation("TeacherCourses")
+  enrollments        Enrollment[]
+  attempts           Attempt[]
+  teacherSessions    LiveSession[]     @relation("TeacherSessions")
+  liveParticipations LiveParticipant[] @relation("UserParticipations")
 }
 
 // ===========================================
@@ -100,13 +102,15 @@ model Activity {
   basePoints Int      @default(100)
   order      Int      @default(0)
   isActive   Boolean  @default(true)
+  mode       String   @default("ASYNC") // "ASYNC" | "LIVE"
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  lessonId  String
-  lesson    Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  questions Question[]
-  attempts  Attempt[]
+  lessonId     String
+  lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions    Question[]
+  attempts     Attempt[]
+  liveSessions LiveSession[]
 }
 
 model Question {
@@ -125,6 +129,7 @@ model Question {
   activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   answers    Answer[]
   aiEvals    AIEval[]
+  liveAnswers LiveAnswer[]
 }
 
 // ===========================================
@@ -191,4 +196,73 @@ model AttendanceSession {
 model AttendanceMark {
   id       String   @id @default(cuid())
   markedAt DateTime @default(now())
+}
+
+// ===========================================
+// LIVE SESSIONS (Kahoot Mode)
+// ===========================================
+
+model LiveSession {
+  id                   String    @id @default(cuid())
+  roomCode             String    @unique
+  status               String    @default("WAITING") // WAITING | IN_PROGRESS | SHOWING_RESULTS | COMPLETED
+  currentQuestionIndex Int       @default(-1)
+  questionStartedAt    DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  completedAt          DateTime?
+
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  teacherId String
+  teacher   User   @relation("TeacherSessions", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  participants LiveParticipant[]
+  liveAnswers  LiveAnswer[]
+
+  @@index([roomCode])
+  @@index([status])
+}
+
+model LiveParticipant {
+  id          String   @id @default(cuid())
+  nickname    String
+  totalScore  Int      @default(0)
+  isConnected Boolean  @default(true)
+  joinedAt    DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  sessionId String
+  session   LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("UserParticipations", fields: [userId], references: [id], onDelete: Cascade)
+
+  liveAnswers LiveAnswer[]
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+}
+
+model LiveAnswer {
+  id            String   @id @default(cuid())
+  questionIndex Int
+  selectedIndex Int?
+  isCorrect     Boolean  @default(false)
+  timeSpent     Int      // milisegundos
+  score         Int      @default(0)
+  answeredAt    DateTime @default(now())
+
+  sessionId String
+  session   LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  participantId String
+  participant   LiveParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, participantId, questionIndex])
+  @@index([sessionId, questionIndex])
 }
