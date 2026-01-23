@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
 import { Loader2, Trash2 } from 'lucide-react'
@@ -26,6 +25,12 @@ export function DeleteLessonButton({ courseId, lessonId, lessonTitle }: DeleteLe
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  function handleOpen(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setOpen(true)
+  }
 
   async function onDelete() {
     setIsLoading(true)
@@ -60,18 +65,17 @@ export function DeleteLessonButton({ courseId, lessonId, lessonTitle }: DeleteLe
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-          onClick={(e) => e.preventDefault()}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+        onClick={handleOpen}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Eliminar clase</DialogTitle>
           <DialogDescription>
@@ -89,7 +93,8 @@ export function DeleteLessonButton({ courseId, lessonId, lessonTitle }: DeleteLe
             Eliminar
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreateLessonDialog } from '@/components/create-lesson-dialog'
 import { DeleteLessonButton } from '@/components/delete-lesson-button'
+import { ExtendLessonDialog } from '@/components/extend-lesson-dialog'
 import { ShareCodeCard } from '@/components/share-code-card'
 import { ArrowLeft, Plus, Clock, Users, Trophy } from 'lucide-react'
 import { isLessonAccessible } from '@/lib/utils'
@@ -157,6 +158,13 @@ export default async function CoursePage({ params }: Props) {
                             >
                               {isActive ? 'Activa' : isPast ? 'Finalizada' : 'Programada'}
                             </div>
+                            {isPast && (
+                              <ExtendLessonDialog
+                                courseId={course.id}
+                                lessonId={lesson.id}
+                                lessonTitle={lesson.title}
+                              />
+                            )}
                             <DeleteLessonButton
                               courseId={course.id}
                               lessonId={lesson.id}

@@ -22,7 +22,11 @@
       "Bash(timeout:*)",
       "Bash(ping:*)",
       "Bash(npx tsx:*)",
-      "Bash(ipconfig:*)"
+      "Bash(ipconfig:*)",
+      "Bash(npm run dev:ws:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File .scriptsstart_tunnel.ps1)",
+      "Bash(powershell:*)",
+      "Bash(cloudflared tunnel:*)"
     ]
   }
 }
