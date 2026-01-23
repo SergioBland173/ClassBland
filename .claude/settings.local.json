@@ -26,7 +26,8 @@
       "Bash(npm run dev:ws:*)",
       "Bash(powershell -ExecutionPolicy Bypass -File .scriptsstart_tunnel.ps1)",
       "Bash(powershell:*)",
-      "Bash(cloudflared tunnel:*)"
+      "Bash(cloudflared tunnel:*)",
+      "Bash(npx kill-port 3001)"
     ]
   }
 }

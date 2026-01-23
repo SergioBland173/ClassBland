@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreateLessonDialog } from '@/components/create-lesson-dialog'
 import { DeleteLessonButton } from '@/components/delete-lesson-button'
-import { ExtendLessonDialog } from '@/components/extend-lesson-dialog'
+import { LessonStatusBadge } from '@/components/lesson-status-badge'
 import { ShareCodeCard } from '@/components/share-code-card'
 import { ArrowLeft, Plus, Clock, Users, Trophy } from 'lucide-react'
 import { isLessonAccessible } from '@/lib/utils'
@@ -147,24 +147,14 @@ export default async function CoursePage({ params }: Props) {
                             </CardDescription>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div
-                              className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                isActive
-                                  ? 'bg-success/10 text-success'
-                                  : isPast
-                                  ? 'bg-muted text-muted-foreground'
-                                  : 'bg-warning/10 text-warning'
-                              }`}
-                            >
-                              {isActive ? 'Activa' : isPast ? 'Finalizada' : 'Programada'}
-                            </div>
-                            {isPast && (
-                              <ExtendLessonDialog
-                                courseId={course.id}
-                                lessonId={lesson.id}
-                                lessonTitle={lesson.title}
-                              />
-                            )}
+                            <LessonStatusBadge
+                              courseId={course.id}
+                              lessonId={lesson.id}
+                              lessonTitle={lesson.title}
+                              isActive={isActive}
+                              isPast={isPast}
+                              isFuture={isFuture}
+                            />
                             <DeleteLessonButton
                               courseId={course.id}
                               lessonId={lesson.id}

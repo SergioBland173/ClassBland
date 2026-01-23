@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { createServer } from 'http'
 import { Server, Socket } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
@@ -7,13 +8,16 @@ import type { ClientToServerEvents, ServerToClientEvents, Participant } from './
 const prisma = new PrismaClient()
 const httpServer = createServer()
 
+// Orígenes CORS: localhost + variable de entorno para túneles
+const corsOrigins = [
+  'http://localhost:3000',
+  'http://192.168.1.16:3000',
+  process.env.NEXT_PUBLIC_APP_URL,
+].filter(Boolean) as string[]
+
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: {
-    origin: [
-      'http://localhost:3000',
-      'http://192.168.1.16:3000',
-      'https://guild-pioneer-insured-students.trycloudflare.com'
-    ],
+    origin: corsOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
   },
