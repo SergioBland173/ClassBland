@@ -67,6 +67,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
           session.id,
           session.activity.questions.map((q) => ({
             id: q.id,
+            type: q.type || 'MULTIPLE_CHOICE',
             prompt: q.prompt,
             options: q.options || '[]',
             correctIndex: q.correctIndex || 0,
@@ -125,6 +126,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
           session.id,
           session.activity.questions.map((q) => ({
             id: q.id,
+            type: q.type || 'MULTIPLE_CHOICE',
             prompt: q.prompt,
             options: q.options || '[]',
             correctIndex: q.correctIndex || 0,
@@ -187,6 +189,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
       // Enviar pregunta sin respuesta correcta
       const questionForClients = {
         id: question.id,
+        type: question.type,
         prompt: question.prompt,
         options: question.options,
         timeLimit: question.timeLimit,
@@ -341,6 +344,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
 
       const questionForClients = {
         id: question.id,
+        type: question.type,
         prompt: question.prompt,
         options: question.options,
         timeLimit: question.timeLimit,

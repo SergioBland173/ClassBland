@@ -18,9 +18,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 interface Question {
   id: string
+  type: string
   prompt: string
   options: string[]
   correctIndex: number
@@ -116,7 +119,7 @@ export function LiveSessionControl({
     const unsubQuestionStarted = on('question-started', (data: any) => {
       setStatus('IN_PROGRESS')
       setCurrentQuestionIndex(data.questionIndex)
-      setRemainingTime(questionTimeLimit)
+      setRemainingTime(data.question.timeLimit)
       setQuestionStats(null)
     })
 
@@ -139,7 +142,7 @@ export function LiveSessionControl({
       unsubQuestionResults()
       unsubSessionEnded()
     }
-  }, [socket, isConnected, sessionId, emit, on, toast, questionTimeLimit])
+  }, [socket, isConnected, sessionId, emit, on, toast])
 
   const copyRoomCode = useCallback(() => {
     navigator.clipboard.writeText(roomCode)
@@ -377,14 +380,32 @@ export function LiveSessionControl({
                   />
                   <div className="p-4 bg-muted rounded-lg">
                     <p className="text-lg font-medium">{currentQuestion.prompt}</p>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className={cn(
+                      'mt-4 grid gap-2',
+                      currentQuestion.type === 'IMAGE_CHOICE' ? 'grid-cols-3' : 'grid-cols-2'
+                    )}>
                       {currentQuestion.options.map((option, index) => (
-                        <div
-                          key={index}
-                          className="p-3 bg-background rounded-lg border text-sm"
-                        >
-                          {option}
-                        </div>
+                        currentQuestion.type === 'IMAGE_CHOICE' ? (
+                          <div
+                            key={index}
+                            className="relative aspect-square rounded-lg border overflow-hidden"
+                          >
+                            <Image
+                              src={option}
+                              alt={`Opcion ${index + 1}`}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            key={index}
+                            className="p-3 bg-background rounded-lg border text-sm"
+                          >
+                            {option}
+                          </div>
+                        )
                       ))}
                     </div>
                   </div>
@@ -411,32 +432,69 @@ export function LiveSessionControl({
                   </div>
 
                   {currentQuestion && (
-                    <div className="space-y-2">
-                      {currentQuestion.options.map((option, index) => {
-                        const count = questionStats.answersPerOption[index] || 0
-                        const percentage = questionStats.totalAnswers > 0
-                          ? Math.round((count / questionStats.totalAnswers) * 100)
-                          : 0
-                        const isCorrect = index === currentQuestion.correctIndex
+                    currentQuestion.type === 'IMAGE_CHOICE' ? (
+                      <div className="grid grid-cols-3 gap-3">
+                        {currentQuestion.options.map((option, index) => {
+                          const count = questionStats.answersPerOption[index] || 0
+                          const percentage = questionStats.totalAnswers > 0
+                            ? Math.round((count / questionStats.totalAnswers) * 100)
+                            : 0
+                          const isCorrect = index === currentQuestion.correctIndex
 
-                        return (
-                          <div key={index} className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span className={isCorrect ? 'text-green-500 font-medium' : ''}>
-                                {option} {isCorrect && '(Correcta)'}
-                              </span>
-                              <span>{count} ({percentage}%)</span>
+                          return (
+                            <div key={index} className="space-y-1">
+                              <div className={cn(
+                                'relative aspect-square rounded-lg border-2 overflow-hidden',
+                                isCorrect ? 'border-green-500 ring-2 ring-green-500' : 'border-border'
+                              )}>
+                                <Image
+                                  src={option}
+                                  alt={`Opcion ${index + 1}`}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
+                                />
+                                {isCorrect && (
+                                  <div className="absolute top-1 left-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                                    <Check className="h-4 w-4 text-white" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-center text-sm">
+                                <span>{count} ({percentage}%)</span>
+                              </div>
                             </div>
-                            <div className="h-2 bg-muted rounded-full overflow-hidden">
-                              <div
-                                className={`h-full ${isCorrect ? 'bg-green-500' : 'bg-primary'}`}
-                                style={{ width: `${percentage}%` }}
-                              />
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {currentQuestion.options.map((option, index) => {
+                          const count = questionStats.answersPerOption[index] || 0
+                          const percentage = questionStats.totalAnswers > 0
+                            ? Math.round((count / questionStats.totalAnswers) * 100)
+                            : 0
+                          const isCorrect = index === currentQuestion.correctIndex
+
+                          return (
+                            <div key={index} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className={isCorrect ? 'text-green-500 font-medium' : ''}>
+                                  {option} {isCorrect && '(Correcta)'}
+                                </span>
+                                <span>{count} ({percentage}%)</span>
+                              </div>
+                              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full ${isCorrect ? 'bg-green-500' : 'bg-primary'}`}
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )
-                      })}
-                    </div>
+                          )
+                        })}
+                      </div>
+                    )
                   )}
 
                   {currentQuestionIndex < questions.length - 1 ? (

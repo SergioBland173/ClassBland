@@ -13,14 +13,16 @@ class RoomManager {
   createRoom(
     roomCode: string,
     sessionId: string,
-    questions: { id: string; prompt: string; options: string; correctIndex: number; timeLimit: number | null }[],
+    questions: { id: string; type: string; prompt: string; options: string; correctIndex: number; timeLimit: number | null }[],
     basePoints: number,
     activityTimeLimit: number | null
   ): RoomState {
     const parsedQuestions: QuestionData[] = questions.map((q, index) => ({
       id: q.id,
+      type: q.type,
       prompt: q.prompt,
       options: q.options ? JSON.parse(q.options) : [],
+      correctIndex: q.correctIndex,
       timeLimit: q.timeLimit || activityTimeLimit || 30,
       questionIndex: index,
     }))
@@ -132,11 +134,7 @@ class RoomManager {
       return { success: false, score: 0, isCorrect: false }
     }
 
-    const correctIndex = room.questions[questionIndex]?.options ?
-      JSON.parse(JSON.stringify(question)).correctIndex : -1
-
-    // Buscar la respuesta correcta de la pregunta original
-    const isCorrect = selectedIndex === (question as any).correctIndex
+    const isCorrect = selectedIndex === question.correctIndex
 
     let score = 0
     if (isCorrect) {

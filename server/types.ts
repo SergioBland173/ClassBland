@@ -10,6 +10,18 @@ export interface Participant {
 
 export interface QuestionData {
   id: string
+  type: string
+  prompt: string
+  options: string[]
+  correctIndex: number
+  timeLimit: number
+  questionIndex: number
+}
+
+// Versión para enviar a estudiantes (sin la respuesta correcta)
+export interface QuestionDataForClient {
+  id: string
+  type: string
   prompt: string
   options: string[]
   timeLimit: number
@@ -66,7 +78,7 @@ export interface ServerToClientEvents {
   'participant-joined': (participant: Participant) => void
   'participant-left': (data: { odlsId: string }) => void
   'question-started': (data: {
-    question: QuestionData
+    question: QuestionDataForClient
     questionIndex: number
     serverTime: number
   }) => void

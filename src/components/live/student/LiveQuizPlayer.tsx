@@ -9,9 +9,11 @@ import { CountdownTimer } from '../shared/CountdownTimer'
 import { Leaderboard } from '../shared/Leaderboard'
 import { cn } from '@/lib/utils'
 import { Loader2, Check, X, Trophy, LogOut } from 'lucide-react'
+import Image from 'next/image'
 
 interface Question {
   id: string
+  type: string
   prompt: string
   options: string[]
   timeLimit: number
@@ -246,34 +248,66 @@ export function LiveQuizPlayer({
 
           {/* Opciones */}
           {currentQuestion && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={cn(
+              'grid gap-3',
+              currentQuestion.type === 'IMAGE_CHOICE' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'
+            )}>
               {currentQuestion.options.map((option, index) => {
                 const isSelected = selectedAnswer === index
                 const isCorrect = correctIndex === index
                 const isWrong = status === 'SHOWING_RESULTS' && isSelected && !isCorrect
+                const isImageChoice = currentQuestion.type === 'IMAGE_CHOICE'
 
                 return (
-                  <Button
+                  <button
                     key={index}
-                    variant="outline"
-                    size="lg"
                     className={cn(
-                      'h-auto min-h-[80px] p-4 text-left justify-start whitespace-normal',
-                      isSelected && status === 'IN_PROGRESS' && 'ring-2 ring-primary',
-                      isCorrect && status === 'SHOWING_RESULTS' && 'bg-green-500/20 border-green-500 text-green-700',
-                      isWrong && 'bg-red-500/20 border-red-500 text-red-700'
+                      'relative border-2 rounded-lg transition-all',
+                      isImageChoice ? 'aspect-square overflow-hidden' : 'h-auto min-h-[80px] p-4 text-left',
+                      isSelected && status === 'IN_PROGRESS' && 'ring-2 ring-primary border-primary',
+                      isCorrect && status === 'SHOWING_RESULTS' && 'ring-2 ring-green-500 border-green-500',
+                      isWrong && 'ring-2 ring-red-500 border-red-500',
+                      !isSelected && !isCorrect && !isWrong && 'border-border hover:border-primary/50',
+                      (hasAnswered || status === 'SHOWING_RESULTS') && 'cursor-default'
                     )}
                     onClick={() => submitAnswer(index)}
                     disabled={hasAnswered || status === 'SHOWING_RESULTS'}
                   >
-                    <span className="flex-1">{option}</span>
-                    {isCorrect && status === 'SHOWING_RESULTS' && (
-                      <Check className="w-5 h-5 text-green-500 ml-2" />
+                    {isImageChoice ? (
+                      <>
+                        <Image
+                          src={option}
+                          alt={`Opcion ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                        {isCorrect && status === 'SHOWING_RESULTS' && (
+                          <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                            <Check className="w-5 h-5 text-white" />
+                          </div>
+                        )}
+                        {isWrong && (
+                          <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                            <X className="w-5 h-5 text-white" />
+                          </div>
+                        )}
+                        {isSelected && status === 'IN_PROGRESS' && (
+                          <div className="absolute inset-0 bg-primary/20" />
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-between w-full">
+                        <span className="flex-1">{option}</span>
+                        {isCorrect && status === 'SHOWING_RESULTS' && (
+                          <Check className="w-5 h-5 text-green-500 ml-2" />
+                        )}
+                        {isWrong && (
+                          <X className="w-5 h-5 text-red-500 ml-2" />
+                        )}
+                      </div>
                     )}
-                    {isWrong && (
-                      <X className="w-5 h-5 text-red-500 ml-2" />
-                    )}
-                  </Button>
+                  </button>
                 )
               })}
             </div>

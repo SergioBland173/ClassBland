@@ -46,6 +46,7 @@ export default async function TeacherLiveSessionPage({ params }: Props) {
 
   const questions = liveSession.activity.questions.map((q) => ({
     id: q.id,
+    type: q.type || 'MULTIPLE_CHOICE',
     prompt: q.prompt,
     options: q.options ? JSON.parse(q.options) : [],
     correctIndex: q.correctIndex || 0,
