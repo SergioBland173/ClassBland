@@ -42,7 +42,9 @@
       "Bash(npx prisma migrate:*)",
       "Bash(npm exec:*)",
       "Bash(node_modules.binprisma migrate dev --name add_correct_indexes)",
-      "Bash(npm run db:migrate:*)"
+      "Bash(npm run db:migrate:*)",
+      "Bash(npm run db:generate:*)",
+      "Bash(npx prisma db pull:*)"
     ]
   }
 }
