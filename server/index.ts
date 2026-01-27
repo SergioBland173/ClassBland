@@ -290,7 +290,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
   })
 
   // Estudiante envía respuesta
-  socket.on('submit-answer', async ({ roomCode, questionIndex, selectedIndex, timeSpent }) => {
+  socket.on('submit-answer', async ({ roomCode, questionIndex, selectedIndex, timeSpent: rawTimeSpent }) => {
     const socketData = socketRooms.get(socket.id)
     if (!socketData || socketData.isTeacher) return
 
@@ -307,11 +307,15 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
     const question = session.activity.questions[questionIndex]
     if (!question) return
 
+    // Validar timeSpent para evitar valores absurdos
+    const maxTimeSpent = (question.timeLimit || session.activity.timeLimit || 30) * 1000
+    const timeSpent = Math.min(Math.max(0, rawTimeSpent), maxTimeSpent)
+
     const isCorrect = selectedIndex === question.correctIndex
     let score = 0
 
     if (isCorrect) {
-      const timeLimit = (question.timeLimit || session.activity.timeLimit || 30) * 1000
+      const timeLimit = maxTimeSpent
       const timeFactor = Math.max(0.3, 1 - timeSpent / timeLimit)
       score = Math.round(session.activity.basePoints * timeFactor)
     }

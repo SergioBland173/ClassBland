@@ -126,7 +126,10 @@ export function LiveQuizPlayer({
     if (hasAnswered || !currentQuestion) return
 
     setSelectedAnswer(optionIndex)
-    const timeSpent = Date.now() - answerStartTime
+    const rawTimeSpent = Date.now() - answerStartTime
+    // Validar que timeSpent sea razonable (máximo = tiempo límite en ms)
+    const maxTime = currentQuestion.timeLimit * 1000
+    const timeSpent = Math.min(Math.max(0, rawTimeSpent), maxTime)
 
     emit('submit-answer', {
       roomCode,
