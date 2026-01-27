@@ -1,12 +1,86 @@
 import 'dotenv/config'
-import { createServer } from 'http'
+import { createServer, IncomingMessage, ServerResponse } from 'http'
 import { Server, Socket } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
+import { createHmac, timingSafeEqual } from 'crypto'
+import { exec } from 'child_process'
 import { roomManager } from './room-manager.js'
 import type { ClientToServerEvents, ServerToClientEvents, Participant } from './types.js'
 
 const prisma = new PrismaClient()
-const httpServer = createServer()
+
+// Webhook secret para GitHub (configura en .env)
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'cambia-este-secreto-por-uno-seguro'
+
+function verifyGitHubSignature(payload: string, signature: string | undefined): boolean {
+  if (!signature) return false
+  const hmac = createHmac('sha256', WEBHOOK_SECRET)
+  const digest = 'sha256=' + hmac.update(payload).digest('hex')
+  try {
+    return timingSafeEqual(Buffer.from(signature), Buffer.from(digest))
+  } catch {
+    return false
+  }
+}
+
+function runDeploy() {
+  console.log('[Deploy] Iniciando deployment...')
+  const commands = [
+    'git pull origin main',
+    'npm install',
+    'cd server && npm install',
+    'pm2 restart classbland-server'
+  ].join(' && ')
+
+  exec(commands, { cwd: process.cwd() }, (error, stdout, stderr) => {
+    if (error) {
+      console.error('[Deploy] Error:', error.message)
+      console.error('[Deploy] stderr:', stderr)
+      return
+    }
+    console.log('[Deploy] Exitoso:', stdout)
+  })
+}
+
+const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
+  // Endpoint para webhook de GitHub
+  if (req.method === 'POST' && req.url === '/deploy') {
+    let body = ''
+    req.on('data', chunk => { body += chunk.toString() })
+    req.on('end', () => {
+      const signature = req.headers['x-hub-signature-256'] as string | undefined
+
+      if (!verifyGitHubSignature(body, signature)) {
+        console.log('[Webhook] Firma invalida')
+        res.writeHead(401)
+        res.end('Unauthorized')
+        return
+      }
+
+      try {
+        const payload = JSON.parse(body)
+        if (payload.ref === 'refs/heads/main') {
+          console.log('[Webhook] Push detectado en main, iniciando deploy...')
+          runDeploy()
+          res.writeHead(200)
+          res.end('Deploy iniciado')
+        } else {
+          console.log('[Webhook] Push a otra rama, ignorando:', payload.ref)
+          res.writeHead(200)
+          res.end('Ignorado - no es main')
+        }
+      } catch {
+        res.writeHead(400)
+        res.end('Invalid JSON')
+      }
+    })
+    return
+  }
+
+  // Cualquier otra ruta
+  res.writeHead(404)
+  res.end('Not found')
+})
 
 // Orígenes CORS: localhost + variable de entorno para túneles
 const corsOrigins = [

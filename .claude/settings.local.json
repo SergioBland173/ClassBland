@@ -27,7 +27,17 @@
       "Bash(powershell -ExecutionPolicy Bypass -File .scriptsstart_tunnel.ps1)",
       "Bash(powershell:*)",
       "Bash(cloudflared tunnel:*)",
-      "Bash(npx kill-port 3001)"
+      "Bash(npx kill-port 3001)",
+      "Bash(pm2 start:*)",
+      "Bash(pm2 restart:*)",
+      "Bash(pm2 delete:*)",
+      "Bash(cmd /c \"dir c:\\\\Users\\\\SergioBland\\\\Desktop\\\\ClassBland\\\\node_modules\\\\.bin\\\\tsx*\")",
+      "Bash(pm2 status:*)",
+      "Bash(pm2 stop:*)",
+      "Bash(cmd /c \"taskkill /PID 30184 /F\")",
+      "Bash(tasklist:*)",
+      "Bash(pm2 save:*)",
+      "Bash(curl:*)"
     ]
   }
 }
