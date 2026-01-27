@@ -37,7 +37,8 @@
       "Bash(cmd /c \"taskkill /PID 30184 /F\")",
       "Bash(tasklist:*)",
       "Bash(pm2 save:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git push:*)"
     ]
   }
 }

@@ -25,20 +25,24 @@ function verifyGitHubSignature(payload: string, signature: string | undefined): 
 
 function runDeploy() {
   console.log('[Deploy] Iniciando deployment...')
-  const commands = [
-    'git pull origin master',
-    'npm install',
-    'cd server && npm install',
-    'pm2 restart classbland-server'
-  ].join(' && ')
 
-  exec(commands, { cwd: process.cwd() }, (error, stdout, stderr) => {
-    if (error) {
-      console.error('[Deploy] Error:', error.message)
-      console.error('[Deploy] stderr:', stderr)
+  // Paso 1: git pull
+  exec('git pull origin master', { cwd: process.cwd() }, (pullError, pullStdout, pullStderr) => {
+    if (pullError) {
+      console.error('[Deploy] Error en git pull:', pullError.message)
+      console.error('[Deploy] stderr:', pullStderr)
       return
     }
-    console.log('[Deploy] Exitoso:', stdout)
+    console.log('[Deploy] Git pull exitoso:', pullStdout)
+
+    // Paso 2: reiniciar con PM2
+    exec('pm2 restart classbland-server', { cwd: process.cwd() }, (restartError) => {
+      if (restartError) {
+        console.error('[Deploy] Error al reiniciar:', restartError.message)
+        return
+      }
+      console.log('[Deploy] Servidor reiniciado con PM2')
+    })
   })
 }
 
