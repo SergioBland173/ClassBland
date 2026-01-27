@@ -30,16 +30,59 @@ export function AddQuestionForm({
   const [isLoading, setIsLoading] = useState(false)
   const [questionType, setQuestionType] = useState<QuestionType>('MULTIPLE_CHOICE')
   const [prompt, setPrompt] = useState('')
+  const [questionImageUrl, setQuestionImageUrl] = useState<string | null>(null)
+  const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false)
   const [options, setOptions] = useState(['', '', '', ''])
   const [imageOptions, setImageOptions] = useState<string[]>([])
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const [correctIndex, setCorrectIndex] = useState(0)
   const [timeLimit, setTimeLimit] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const questionImageInputRef = useRef<HTMLInputElement>(null)
 
   function addOption() {
     if (options.length < 6) {
       setOptions([...options, ''])
+    }
+  }
+
+  async function handleQuestionImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingQuestionImage(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al subir imagen')
+      }
+
+      setQuestionImageUrl(data.url)
+      toast({
+        title: 'Imagen subida',
+        variant: 'success',
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Error al subir imagen',
+        variant: 'destructive',
+      })
+    } finally {
+      setUploadingQuestionImage(false)
+      if (questionImageInputRef.current) {
+        questionImageInputRef.current.value = ''
+      }
     }
   }
 
@@ -122,6 +165,7 @@ export function AddQuestionForm({
 
   function resetForm() {
     setPrompt('')
+    setQuestionImageUrl(null)
     setOptions(['', '', '', ''])
     setImageOptions([])
     setCorrectIndex(0)
@@ -168,6 +212,9 @@ export function AddQuestionForm({
       if (questionType === 'MULTIPLE_CHOICE') {
         payload.options = options.filter((o) => o.trim() !== '')
         payload.correctIndex = correctIndex
+        if (questionImageUrl) {
+          payload.imageUrl = questionImageUrl
+        }
       } else if (questionType === 'IMAGE_CHOICE') {
         payload.options = imageOptions
         payload.correctIndex = correctIndex
@@ -293,6 +340,63 @@ export function AddQuestionForm({
           disabled={isLoading}
         />
       </div>
+
+      {/* Question Image (for MULTIPLE_CHOICE) */}
+      {questionType === 'MULTIPLE_CHOICE' && (
+        <div className="space-y-2">
+          <Label>Imagen de la pregunta <span className="text-muted-foreground">(opcional)</span></Label>
+
+          {questionImageUrl ? (
+            <div className="relative w-full max-w-md aspect-video rounded-lg border overflow-hidden">
+              <Image
+                src={questionImageUrl}
+                alt="Imagen de la pregunta"
+                fill
+                className="object-contain"
+                unoptimized
+              />
+              <button
+                type="button"
+                onClick={() => setQuestionImageUrl(null)}
+                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-destructive/90 flex items-center justify-center hover:bg-destructive transition-colors"
+                disabled={isLoading}
+              >
+                <X className="h-4 w-4 text-destructive-foreground" />
+              </button>
+            </div>
+          ) : (
+            <div>
+              <input
+                ref={questionImageInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handleQuestionImageUpload}
+                className="hidden"
+                disabled={isLoading || uploadingQuestionImage}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => questionImageInputRef.current?.click()}
+                disabled={isLoading || uploadingQuestionImage}
+                className="border-dashed"
+              >
+                {uploadingQuestionImage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Subiendo...
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Agregar imagen
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Multiple Choice Options */}
       {questionType === 'MULTIPLE_CHOICE' && (

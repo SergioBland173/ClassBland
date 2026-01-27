@@ -15,6 +15,7 @@ interface Question {
   id: string
   type: string
   prompt: string
+  imageUrl: string | null
   options: string[]
   timeLimit: number
   questionIndex: number
@@ -238,10 +239,21 @@ export function LiveQuizPlayer({
           {/* Pregunta */}
           {currentQuestion && (
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-6 space-y-4">
                 <p className="text-xl font-medium text-center">
                   {currentQuestion.prompt}
                 </p>
+                {currentQuestion.imageUrl && (
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                    <Image
+                      src={currentQuestion.imageUrl}
+                      alt="Imagen de la pregunta"
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

@@ -25,6 +25,7 @@ interface Question {
   id: string
   type: string
   prompt: string
+  imageUrl: string | null
   options: string[]
   correctIndex: number
   timeLimit: number | null
@@ -378,10 +379,21 @@ export function LiveSessionControl({
                     remainingTime={remainingTime}
                     onTimeUp={showResults}
                   />
-                  <div className="p-4 bg-muted rounded-lg">
+                  <div className="p-4 bg-muted rounded-lg space-y-4">
                     <p className="text-lg font-medium">{currentQuestion.prompt}</p>
+                    {currentQuestion.imageUrl && (
+                      <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                        <Image
+                          src={currentQuestion.imageUrl}
+                          alt="Imagen de la pregunta"
+                          fill
+                          className="object-contain"
+                          unoptimized
+                        />
+                      </div>
+                    )}
                     <div className={cn(
-                      'mt-4 grid gap-2',
+                      'grid gap-2',
                       currentQuestion.type === 'IMAGE_CHOICE' ? 'grid-cols-3' : 'grid-cols-2'
                     )}>
                       {currentQuestion.options.map((option, index) => (

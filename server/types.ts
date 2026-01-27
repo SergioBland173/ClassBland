@@ -12,6 +12,7 @@ export interface QuestionData {
   id: string
   type: string
   prompt: string
+  imageUrl: string | null
   options: string[]
   correctIndex: number
   timeLimit: number
@@ -23,6 +24,7 @@ export interface QuestionDataForClient {
   id: string
   type: string
   prompt: string
+  imageUrl: string | null
   options: string[]
   timeLimit: number
   questionIndex: number

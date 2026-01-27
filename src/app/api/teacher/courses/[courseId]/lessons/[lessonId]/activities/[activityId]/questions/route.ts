@@ -6,6 +6,7 @@ import { z } from 'zod'
 const createQuestionSchema = z.object({
   prompt: z.string().min(2, 'Prompt must be at least 2 characters'),
   type: z.enum(['MULTIPLE_CHOICE', 'OPEN_TEXT', 'IMAGE_CHOICE']).default('MULTIPLE_CHOICE'),
+  imageUrl: z.string().min(1).optional(),
   options: z.array(z.string()).min(2).max(6).optional(),
   correctIndex: z.number().int().min(0).optional(),
   timeLimit: z.number().int().positive().optional(),
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest, { params }: Props) {
       )
     }
 
-    const { prompt, type, options, correctIndex, timeLimit, order } = result.data
+    const { prompt, type, imageUrl, options, correctIndex, timeLimit, order } = result.data
 
     // Validate options for types that require them
     if (type !== 'OPEN_TEXT') {
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest, { params }: Props) {
       data: {
         prompt,
         type,
+        imageUrl: imageUrl || null,
         options: options ? JSON.stringify(options) : null,
         correctIndex: correctIndex ?? null,
         timeLimit: timeLimit || null,

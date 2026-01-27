@@ -13,7 +13,7 @@ class RoomManager {
   createRoom(
     roomCode: string,
     sessionId: string,
-    questions: { id: string; type: string; prompt: string; options: string; correctIndex: number; timeLimit: number | null }[],
+    questions: { id: string; type: string; prompt: string; imageUrl: string | null; options: string; correctIndex: number; timeLimit: number | null }[],
     basePoints: number,
     activityTimeLimit: number | null
   ): RoomState {
@@ -21,6 +21,7 @@ class RoomManager {
       id: q.id,
       type: q.type,
       prompt: q.prompt,
+      imageUrl: q.imageUrl,
       options: q.options ? JSON.parse(q.options) : [],
       correctIndex: q.correctIndex,
       timeLimit: q.timeLimit || activityTimeLimit || 30,

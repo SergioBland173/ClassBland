@@ -117,6 +117,7 @@ model Question {
   id             String   @id @default(cuid())
   type           String   @default("MULTIPLE_CHOICE")
   prompt         String
+  imageUrl       String?  // URL de imagen opcional para la pregunta
   options        String?  // JSON string: ["A", "B", "C", "D"]
   correctIndex   Int?
   expectedAnswer String?

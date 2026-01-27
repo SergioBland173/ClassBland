@@ -48,6 +48,7 @@ export default async function TeacherLiveSessionPage({ params }: Props) {
     id: q.id,
     type: q.type || 'MULTIPLE_CHOICE',
     prompt: q.prompt,
+    imageUrl: q.imageUrl || null,
     options: q.options ? JSON.parse(q.options) : [],
     correctIndex: q.correctIndex || 0,
     timeLimit: q.timeLimit,

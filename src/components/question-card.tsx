@@ -17,6 +17,7 @@ interface Question {
   id: string
   type: string
   prompt: string
+  imageUrl: string | null
   options: string[] | null
   correctIndex: number | null
   timeLimit: number | null
@@ -60,13 +61,17 @@ export function QuestionCard({
   )
   const [editCorrectIndex, setEditCorrectIndex] = useState(question.correctIndex ?? 0)
   const [editTimeLimit, setEditTimeLimit] = useState(question.timeLimit?.toString() ?? '')
+  const [editQuestionImageUrl, setEditQuestionImageUrl] = useState<string | null>(question.imageUrl)
+  const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false)
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const questionImageInputRef = useRef<HTMLInputElement>(null)
 
   function startEditing() {
     const type = (question.type as QuestionType) || 'MULTIPLE_CHOICE'
     setEditType(type)
     setEditPrompt(question.prompt)
+    setEditQuestionImageUrl(question.imageUrl)
     if (type === 'MULTIPLE_CHOICE') {
       setEditOptions(parsedOptions.length > 0 ? parsedOptions : ['', '', '', ''])
       setEditImageOptions([])
@@ -84,6 +89,42 @@ export function QuestionCard({
 
   function cancelEditing() {
     setIsEditing(false)
+  }
+
+  async function handleQuestionImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingQuestionImage(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al subir imagen')
+      }
+
+      setEditQuestionImageUrl(data.url)
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Error al subir imagen',
+        variant: 'destructive',
+      })
+    } finally {
+      setUploadingQuestionImage(false)
+      if (questionImageInputRef.current) {
+        questionImageInputRef.current.value = ''
+      }
+    }
   }
 
   function addOption() {
@@ -201,12 +242,15 @@ export function QuestionCard({
       if (editType === 'MULTIPLE_CHOICE') {
         payload.options = editOptions.filter((o) => o.trim() !== '')
         payload.correctIndex = editCorrectIndex
+        payload.imageUrl = editQuestionImageUrl
       } else if (editType === 'IMAGE_CHOICE') {
         payload.options = editImageOptions
         payload.correctIndex = editCorrectIndex
+        payload.imageUrl = null
       } else {
         payload.options = null
         payload.correctIndex = null
+        payload.imageUrl = null
       }
 
       const res = await fetch(
@@ -360,6 +404,62 @@ export function QuestionCard({
               placeholder="Escribe la pregunta..."
             />
           </div>
+
+          {/* Question Image (for MULTIPLE_CHOICE) */}
+          {editType === 'MULTIPLE_CHOICE' && (
+            <div className="space-y-2">
+              <Label>Imagen de la pregunta <span className="text-muted-foreground">(opcional)</span></Label>
+              {editQuestionImageUrl ? (
+                <div className="relative w-full max-w-xs aspect-video rounded-lg border overflow-hidden">
+                  <Image
+                    src={editQuestionImageUrl}
+                    alt="Imagen de la pregunta"
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditQuestionImageUrl(null)}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 flex items-center justify-center hover:bg-destructive transition-colors"
+                  >
+                    <X className="h-3 w-3 text-destructive-foreground" />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    ref={questionImageInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleQuestionImageUpload}
+                    className="hidden"
+                    disabled={uploadingQuestionImage}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => questionImageInputRef.current?.click()}
+                    disabled={uploadingQuestionImage}
+                    className="border-dashed"
+                  >
+                    {uploadingQuestionImage ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="mr-2 h-4 w-4" />
+                        Agregar imagen
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Multiple Choice Options */}
           {editType === 'MULTIPLE_CHOICE' && (
@@ -579,21 +679,34 @@ export function QuestionCard({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {parsedOptions.map((option, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'px-3 py-2 rounded-lg text-sm flex items-center gap-2',
-                  i === question.correctIndex
-                    ? 'bg-success/10 text-success border border-success/20'
-                    : 'bg-muted'
-                )}
-              >
-                {i === question.correctIndex && <Check className="h-4 w-4" />}
-                {option}
+          <div className="space-y-3">
+            {question.imageUrl && (
+              <div className="relative w-full max-w-xs aspect-video rounded-lg border overflow-hidden">
+                <Image
+                  src={question.imageUrl}
+                  alt="Imagen de la pregunta"
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
               </div>
-            ))}
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              {parsedOptions.map((option, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'px-3 py-2 rounded-lg text-sm flex items-center gap-2',
+                    i === question.correctIndex
+                      ? 'bg-success/10 text-success border border-success/20'
+                      : 'bg-muted'
+                  )}
+                >
+                  {i === question.correctIndex && <Check className="h-4 w-4" />}
+                  {option}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

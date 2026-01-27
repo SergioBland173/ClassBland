@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     }
 
     const body = await request.json()
-    const { prompt, type, options, correctIndex, timeLimit } = body
+    const { prompt, type, imageUrl, options, correctIndex, timeLimit } = body
 
     // Validate required fields
     if (!prompt || !type) {
@@ -62,6 +62,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       data: {
         prompt,
         type,
+        imageUrl: imageUrl ?? null,
         options: options ? JSON.stringify(options) : null,
         correctIndex: correctIndex ?? null,
         timeLimit: timeLimit ?? null,
