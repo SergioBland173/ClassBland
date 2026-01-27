@@ -150,6 +150,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
             imageUrl: q.imageUrl,
             options: q.options || '[]',
             correctIndex: q.correctIndex || 0,
+            correctIndexes: q.correctIndexes,
             timeLimit: q.timeLimit,
           })),
           session.activity.basePoints,
@@ -210,6 +211,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
             imageUrl: q.imageUrl,
             options: q.options || '[]',
             correctIndex: q.correctIndex || 0,
+            correctIndexes: q.correctIndexes,
             timeLimit: q.timeLimit,
           })),
           session.activity.basePoints,
@@ -311,7 +313,15 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
     const maxTimeSpent = (question.timeLimit || session.activity.timeLimit || 30) * 1000
     const timeSpent = Math.min(Math.max(0, rawTimeSpent), maxTimeSpent)
 
-    const isCorrect = selectedIndex === question.correctIndex
+    // Parsear correctIndexes con fallback a correctIndex
+    let correctIndexes: number[] = []
+    if (question.correctIndexes) {
+      correctIndexes = JSON.parse(question.correctIndexes)
+    } else if (question.correctIndex !== null) {
+      correctIndexes = [question.correctIndex]
+    }
+
+    const isCorrect = correctIndexes.includes(selectedIndex)
     let score = 0
 
     if (isCorrect) {
@@ -384,12 +394,20 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
 
       const stats = roomManager.getQuestionStats(roomCode, session.currentQuestionIndex)
       const leaderboard = roomManager.getLeaderboard(roomCode, session.currentQuestionIndex)
-      const correctIndex = session.activity.questions[session.currentQuestionIndex]?.correctIndex || 0
+
+      // Parsear correctIndexes con fallback a correctIndex
+      const currentQuestion = session.activity.questions[session.currentQuestionIndex]
+      let correctIndexes: number[] = []
+      if (currentQuestion?.correctIndexes) {
+        correctIndexes = JSON.parse(currentQuestion.correctIndexes)
+      } else if (currentQuestion?.correctIndex !== null && currentQuestion?.correctIndex !== undefined) {
+        correctIndexes = [currentQuestion.correctIndex]
+      }
 
       liveNS.to(roomCode).emit('question-results', {
         stats: stats!,
         leaderboard: leaderboard.slice(0, 10),
-        correctIndex,
+        correctIndexes,
       })
 
       console.log(`Mostrando resultados para sala ${roomCode}`)

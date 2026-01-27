@@ -38,7 +38,11 @@
       "Bash(tasklist:*)",
       "Bash(pm2 save:*)",
       "Bash(curl:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npm exec:*)",
+      "Bash(node_modules.binprisma migrate dev --name add_correct_indexes)",
+      "Bash(npm run db:migrate:*)"
     ]
   }
 }

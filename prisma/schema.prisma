@@ -119,7 +119,8 @@ model Question {
   prompt         String
   imageUrl       String?  // URL de imagen opcional para la pregunta
   options        String?  // JSON string: ["A", "B", "C", "D"]
-  correctIndex   Int?
+  correctIndex   Int?     // Deprecated: usar correctIndexes para múltiples respuestas
+  correctIndexes String?  // JSON string: [0, 2] - índices de las respuestas correctas
   expectedAnswer String?
   timeLimit      Int?
   order          Int      @default(0)

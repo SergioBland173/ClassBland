@@ -47,7 +47,7 @@ export function LiveQuizPlayer({
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [hasAnswered, setHasAnswered] = useState(false)
   const [answerStartTime, setAnswerStartTime] = useState(0)
-  const [correctIndex, setCorrectIndex] = useState<number | null>(null)
+  const [correctIndexes, setCorrectIndexes] = useState<number[]>([])
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [myPosition, setMyPosition] = useState<number | null>(null)
   const [participantCount, setParticipantCount] = useState(0)
@@ -74,7 +74,7 @@ export function LiveQuizPlayer({
       setRemainingTime(data.question.timeLimit)
       setSelectedAnswer(null)
       setHasAnswered(false)
-      setCorrectIndex(null)
+      setCorrectIndexes([])
       setAnswerStartTime(Date.now())
     })
 
@@ -86,7 +86,7 @@ export function LiveQuizPlayer({
 
     const unsubQuestionResults = on('question-results', (data: any) => {
       setStatus('SHOWING_RESULTS')
-      setCorrectIndex(data.correctIndex)
+      setCorrectIndexes(data.correctIndexes || [])
       setLeaderboard(data.leaderboard)
       const myEntry = data.leaderboard.find((e: any) => e.odlsId === odlsId)
       if (myEntry) {
@@ -269,7 +269,7 @@ export function LiveQuizPlayer({
             )}>
               {currentQuestion.options.map((option, index) => {
                 const isSelected = selectedAnswer === index
-                const isCorrect = correctIndex === index
+                const isCorrect = correctIndexes.includes(index)
                 const isWrong = status === 'SHOWING_RESULTS' && isSelected && !isCorrect
                 const isImageChoice = currentQuestion.type === 'IMAGE_CHOICE'
 

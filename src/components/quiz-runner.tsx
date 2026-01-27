@@ -53,7 +53,7 @@ export function QuizRunner({
   const [feedbackResult, setFeedbackResult] = useState<{
     isCorrect: boolean
     score: number
-    correctIndex: number
+    correctIndexes: number[]
   } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [attemptId, setAttemptId] = useState<string | null>(null)
@@ -145,7 +145,7 @@ export function QuizRunner({
       setFeedbackResult({
         isCorrect: data.isCorrect,
         score: data.score,
-        correctIndex: data.correctIndex,
+        correctIndexes: data.correctIndexes || [],
       })
       setShowFeedback(true)
 
@@ -246,7 +246,7 @@ export function QuizRunner({
           <div className="grid gap-3 w-full">
             {currentQuestion.options.map((option, index) => {
               const isSelected = selectedOption === index
-              const showCorrect = showFeedback && feedbackResult?.correctIndex === index
+              const showCorrect = showFeedback && feedbackResult?.correctIndexes.includes(index)
               const showIncorrect =
                 showFeedback &&
                 selectedOption === index &&
