@@ -26,7 +26,7 @@ function verifyGitHubSignature(payload: string, signature: string | undefined): 
 function runDeploy() {
   console.log('[Deploy] Iniciando deployment...')
   const commands = [
-    'git pull origin main',
+    'git pull origin master',
     'npm install',
     'cd server && npm install',
     'pm2 restart classbland-server'
@@ -59,15 +59,15 @@ const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
 
       try {
         const payload = JSON.parse(body)
-        if (payload.ref === 'refs/heads/main') {
-          console.log('[Webhook] Push detectado en main, iniciando deploy...')
+        if (payload.ref === 'refs/heads/master') {
+          console.log('[Webhook] Push detectado en master, iniciando deploy...')
           runDeploy()
           res.writeHead(200)
           res.end('Deploy iniciado')
         } else {
           console.log('[Webhook] Push a otra rama, ignorando:', payload.ref)
           res.writeHead(200)
-          res.end('Ignorado - no es main')
+          res.end('Ignorado - no es master')
         }
       } catch {
         res.writeHead(400)
