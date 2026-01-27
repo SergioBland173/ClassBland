@@ -78,8 +78,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Determine if correct
-    const isCorrect = selectedIndex === question.correctIndex
+    // Parse correctIndexes (con fallback a correctIndex para compatibilidad)
+    let correctIndexes: number[] = []
+    if (question.correctIndexes) {
+      correctIndexes = JSON.parse(question.correctIndexes)
+    } else if (question.correctIndex !== null) {
+      correctIndexes = [question.correctIndex]
+    }
+
+    // Determine if correct - ahora verifica si está en el array de correctIndexes
+    const isCorrect = correctIndexes.includes(selectedIndex)
 
     // Calculate score
     const timeLimit = question.timeLimit || attempt.activity.timeLimit
@@ -116,7 +124,7 @@ export async function POST(request: NextRequest) {
       answer,
       isCorrect,
       score,
-      correctIndex: question.correctIndex,
+      correctIndexes, // Ahora devuelve el array de correctIndexes
     })
   } catch (error) {
     console.error('Submit answer error:', error)

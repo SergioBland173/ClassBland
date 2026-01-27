@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     }
 
     const body = await request.json()
-    const { prompt, type, imageUrl, options, correctIndex, timeLimit } = body
+    const { prompt, type, imageUrl, options, correctIndex, correctIndexes, timeLimit } = body
 
     // Validate required fields
     if (!prompt || !type) {
@@ -57,6 +57,14 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       )
     }
 
+    // Determinar los índices correctos (preferir correctIndexes si está presente)
+    let finalCorrectIndexes: number[] = []
+    if (correctIndexes && Array.isArray(correctIndexes) && correctIndexes.length > 0) {
+      finalCorrectIndexes = correctIndexes
+    } else if (correctIndex !== undefined && correctIndex !== null) {
+      finalCorrectIndexes = [correctIndex]
+    }
+
     const updated = await db.question.update({
       where: { id: questionId },
       data: {
@@ -64,7 +72,8 @@ export async function PATCH(request: NextRequest, { params }: Props) {
         type,
         imageUrl: imageUrl ?? null,
         options: options ? JSON.stringify(options) : null,
-        correctIndex: correctIndex ?? null,
+        correctIndex: finalCorrectIndexes[0] ?? null, // Compatibilidad hacia atrás
+        correctIndexes: finalCorrectIndexes.length > 0 ? JSON.stringify(finalCorrectIndexes) : null,
         timeLimit: timeLimit ?? null,
       },
     })

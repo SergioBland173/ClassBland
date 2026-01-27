@@ -14,7 +14,8 @@ export interface QuestionData {
   prompt: string
   imageUrl: string | null
   options: string[]
-  correctIndex: number
+  correctIndex: number // Deprecado: usar correctIndexes
+  correctIndexes: number[] // Array de índices de respuestas correctas
   timeLimit: number
   questionIndex: number
 }
@@ -89,7 +90,7 @@ export interface ServerToClientEvents {
   'question-results': (data: {
     stats: QuestionStats
     leaderboard: LeaderboardEntry[]
-    correctIndex: number
+    correctIndexes: number[]
   }) => void
   'session-ended': (data: {
     finalLeaderboard: LeaderboardEntry[]

@@ -20,6 +20,7 @@ interface Question {
   imageUrl: string | null
   options: string[] | null
   correctIndex: number | null
+  correctIndexes: number[] | null
   timeLimit: number | null
   order: number
 }
@@ -50,6 +51,11 @@ export function QuestionCard({
     ? (typeof question.options === 'string' ? JSON.parse(question.options) : question.options)
     : []
 
+  // Parse correctIndexes - handle both string and array, with fallback to correctIndex
+  const parsedCorrectIndexes: number[] = question.correctIndexes
+    ? (typeof question.correctIndexes === 'string' ? JSON.parse(question.correctIndexes) : question.correctIndexes)
+    : (question.correctIndex !== null ? [question.correctIndex] : [0])
+
   // Edit form state
   const [editType, setEditType] = useState<QuestionType>((question.type as QuestionType) || 'MULTIPLE_CHOICE')
   const [editPrompt, setEditPrompt] = useState(question.prompt)
@@ -59,7 +65,7 @@ export function QuestionCard({
   const [editImageOptions, setEditImageOptions] = useState<string[]>(
     editType === 'IMAGE_CHOICE' ? parsedOptions : []
   )
-  const [editCorrectIndex, setEditCorrectIndex] = useState(question.correctIndex ?? 0)
+  const [editCorrectIndexes, setEditCorrectIndexes] = useState<number[]>(parsedCorrectIndexes)
   const [editTimeLimit, setEditTimeLimit] = useState(question.timeLimit?.toString() ?? '')
   const [editQuestionImageUrl, setEditQuestionImageUrl] = useState<string | null>(question.imageUrl)
   const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false)
@@ -82,7 +88,7 @@ export function QuestionCard({
       setEditOptions(['', '', '', ''])
       setEditImageOptions([])
     }
-    setEditCorrectIndex(question.correctIndex ?? 0)
+    setEditCorrectIndexes(parsedCorrectIndexes)
     setEditTimeLimit(question.timeLimit?.toString() ?? '')
     setIsEditing(true)
   }
@@ -137,12 +143,28 @@ export function QuestionCard({
     if (editOptions.length > 2) {
       const newOptions = editOptions.filter((_, i) => i !== idx)
       setEditOptions(newOptions)
-      if (editCorrectIndex >= newOptions.length) {
-        setEditCorrectIndex(newOptions.length - 1)
-      } else if (editCorrectIndex > idx) {
-        setEditCorrectIndex(editCorrectIndex - 1)
-      }
+      // Ajustar correctIndexes al eliminar una opción
+      setEditCorrectIndexes(prev => {
+        const updated = prev
+          .filter(i => i !== idx)
+          .map(i => i > idx ? i - 1 : i)
+        if (updated.length === 0 && newOptions.length > 0) {
+          return [0]
+        }
+        return updated
+      })
     }
+  }
+
+  function toggleEditCorrectIndex(idx: number) {
+    setEditCorrectIndexes(prev => {
+      if (prev.includes(idx)) {
+        if (prev.length === 1) return prev
+        return prev.filter(i => i !== idx)
+      } else {
+        return [...prev, idx].sort((a, b) => a - b)
+      }
+    })
   }
 
   function updateOption(idx: number, value: string) {
@@ -199,11 +221,16 @@ export function QuestionCard({
   function removeImageOption(idx: number) {
     const newOptions = editImageOptions.filter((_, i) => i !== idx)
     setEditImageOptions(newOptions)
-    if (editCorrectIndex >= newOptions.length && newOptions.length > 0) {
-      setEditCorrectIndex(newOptions.length - 1)
-    } else if (editCorrectIndex > idx) {
-      setEditCorrectIndex(editCorrectIndex - 1)
-    }
+    // Ajustar correctIndexes al eliminar una imagen
+    setEditCorrectIndexes(prev => {
+      const updated = prev
+        .filter(i => i !== idx)
+        .map(i => i > idx ? i - 1 : i)
+      if (updated.length === 0 && newOptions.length > 0) {
+        return [0]
+      }
+      return updated
+    })
   }
 
   async function handleSave() {
@@ -241,15 +268,15 @@ export function QuestionCard({
 
       if (editType === 'MULTIPLE_CHOICE') {
         payload.options = editOptions.filter((o) => o.trim() !== '')
-        payload.correctIndex = editCorrectIndex
+        payload.correctIndexes = editCorrectIndexes
         payload.imageUrl = editQuestionImageUrl
       } else if (editType === 'IMAGE_CHOICE') {
         payload.options = editImageOptions
-        payload.correctIndex = editCorrectIndex
+        payload.correctIndexes = editCorrectIndexes
         payload.imageUrl = null
       } else {
         payload.options = null
-        payload.correctIndex = null
+        payload.correctIndexes = null
         payload.imageUrl = null
       }
 
@@ -464,26 +491,26 @@ export function QuestionCard({
           {/* Multiple Choice Options */}
           {editType === 'MULTIPLE_CHOICE' && (
             <div className="space-y-2">
-              <Label>Opciones</Label>
+              <Label>Opciones (puedes seleccionar varias correctas)</Label>
               {editOptions.map((opt, i) => (
                 <div key={i} className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setEditCorrectIndex(i)}
+                    onClick={() => toggleEditCorrectIndex(i)}
                     className={cn(
                       'flex-shrink-0 w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-colors',
-                      editCorrectIndex === i
+                      editCorrectIndexes.includes(i)
                         ? 'bg-success border-success text-success-foreground'
                         : 'border-border hover:border-success/50'
                     )}
                   >
-                    {editCorrectIndex === i && <Check className="h-4 w-4" />}
+                    {editCorrectIndexes.includes(i) && <Check className="h-4 w-4" />}
                   </button>
                   <Input
                     value={opt}
                     onChange={(e) => updateOption(i, e.target.value)}
                     placeholder={`Opcion ${i + 1}`}
-                    className={cn(editCorrectIndex === i && 'border-success')}
+                    className={cn(editCorrectIndexes.includes(i) && 'border-success')}
                   />
                   {editOptions.length > 2 && (
                     <Button
@@ -498,6 +525,11 @@ export function QuestionCard({
                   )}
                 </div>
               ))}
+              {editCorrectIndexes.length > 1 && (
+                <p className="text-sm text-muted-foreground">
+                  {editCorrectIndexes.length} respuestas correctas seleccionadas
+                </p>
+              )}
               {editOptions.length < 6 && (
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -520,7 +552,7 @@ export function QuestionCard({
           {/* Image Choice Options */}
           {editType === 'IMAGE_CHOICE' && (
             <div className="space-y-3">
-              <Label>Imagenes</Label>
+              <Label>Imagenes (puedes seleccionar varias correctas)</Label>
               {editImageOptions.length > 0 && (
                 <div className="grid grid-cols-3 gap-3">
                   {editImageOptions.map((imgUrl, i) => (
@@ -528,14 +560,14 @@ export function QuestionCard({
                       key={i}
                       className={cn(
                         'relative aspect-square rounded-lg border-2 overflow-hidden cursor-pointer',
-                        editCorrectIndex === i
+                        editCorrectIndexes.includes(i)
                           ? 'border-success ring-2 ring-success'
                           : 'border-border hover:border-primary/50'
                       )}
-                      onClick={() => setEditCorrectIndex(i)}
+                      onClick={() => toggleEditCorrectIndex(i)}
                     >
                       <Image src={imgUrl} alt={`Opcion ${i + 1}`} fill className="object-cover" unoptimized />
-                      {editCorrectIndex === i && (
+                      {editCorrectIndexes.includes(i) && (
                         <div className="absolute top-1 left-1 w-6 h-6 rounded-full bg-success flex items-center justify-center">
                           <Check className="h-4 w-4 text-success-foreground" />
                         </div>
@@ -550,6 +582,11 @@ export function QuestionCard({
                     </div>
                   ))}
                 </div>
+              )}
+              {editCorrectIndexes.length > 1 && (
+                <p className="text-sm text-muted-foreground">
+                  {editCorrectIndexes.length} respuestas correctas seleccionadas
+                </p>
               )}
               {editImageOptions.length < 6 && (
                 <div>
@@ -664,13 +701,13 @@ export function QuestionCard({
                 key={i}
                 className={cn(
                   'relative aspect-square rounded-lg border-2 overflow-hidden',
-                  i === question.correctIndex
+                  parsedCorrectIndexes.includes(i)
                     ? 'border-success ring-2 ring-success'
                     : 'border-border'
                 )}
               >
                 <Image src={imgUrl} alt={`Opcion ${i + 1}`} fill className="object-cover" unoptimized />
-                {i === question.correctIndex && (
+                {parsedCorrectIndexes.includes(i) && (
                   <div className="absolute top-1 left-1 w-6 h-6 rounded-full bg-success flex items-center justify-center">
                     <Check className="h-4 w-4 text-success-foreground" />
                   </div>
@@ -697,12 +734,12 @@ export function QuestionCard({
                   key={i}
                   className={cn(
                     'px-3 py-2 rounded-lg text-sm flex items-center gap-2',
-                    i === question.correctIndex
+                    parsedCorrectIndexes.includes(i)
                       ? 'bg-success/10 text-success border border-success/20'
                       : 'bg-muted'
                   )}
                 >
-                  {i === question.correctIndex && <Check className="h-4 w-4" />}
+                  {parsedCorrectIndexes.includes(i) && <Check className="h-4 w-4" />}
                   {option}
                 </div>
               ))}

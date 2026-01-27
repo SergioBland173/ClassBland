@@ -8,7 +8,8 @@ const createQuestionSchema = z.object({
   type: z.enum(['MULTIPLE_CHOICE', 'OPEN_TEXT', 'IMAGE_CHOICE']).default('MULTIPLE_CHOICE'),
   imageUrl: z.string().min(1).optional(),
   options: z.array(z.string()).min(2).max(6).optional(),
-  correctIndex: z.number().int().min(0).optional(),
+  correctIndex: z.number().int().min(0).optional(), // Compatibilidad hacia atrás
+  correctIndexes: z.array(z.number().int().min(0)).min(1).optional(), // Múltiples respuestas correctas
   timeLimit: z.number().int().positive().optional(),
   order: z.number().int().default(1),
 })
@@ -51,7 +52,15 @@ export async function POST(request: NextRequest, { params }: Props) {
       )
     }
 
-    const { prompt, type, imageUrl, options, correctIndex, timeLimit, order } = result.data
+    const { prompt, type, imageUrl, options, correctIndex, correctIndexes, timeLimit, order } = result.data
+
+    // Determinar los índices correctos (preferir correctIndexes si está presente)
+    let finalCorrectIndexes: number[] = []
+    if (correctIndexes && correctIndexes.length > 0) {
+      finalCorrectIndexes = correctIndexes
+    } else if (correctIndex !== undefined) {
+      finalCorrectIndexes = [correctIndex]
+    }
 
     // Validate options for types that require them
     if (type !== 'OPEN_TEXT') {
@@ -61,9 +70,17 @@ export async function POST(request: NextRequest, { params }: Props) {
           { status: 400 }
         )
       }
-      if (correctIndex === undefined || correctIndex >= options.length) {
+      if (finalCorrectIndexes.length === 0) {
         return NextResponse.json(
-          { error: 'correctIndex must be within options range' },
+          { error: 'Se requiere al menos una respuesta correcta' },
+          { status: 400 }
+        )
+      }
+      // Validar que todos los índices estén dentro del rango
+      const invalidIndex = finalCorrectIndexes.find(idx => idx >= options.length)
+      if (invalidIndex !== undefined) {
+        return NextResponse.json(
+          { error: 'correctIndexes must be within options range' },
           { status: 400 }
         )
       }
@@ -75,7 +92,8 @@ export async function POST(request: NextRequest, { params }: Props) {
         type,
         imageUrl: imageUrl || null,
         options: options ? JSON.stringify(options) : null,
-        correctIndex: correctIndex ?? null,
+        correctIndex: finalCorrectIndexes[0] ?? null, // Compatibilidad hacia atrás
+        correctIndexes: finalCorrectIndexes.length > 0 ? JSON.stringify(finalCorrectIndexes) : null,
         timeLimit: timeLimit || null,
         order,
         activityId,

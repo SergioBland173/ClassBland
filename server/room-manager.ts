@@ -13,20 +13,31 @@ class RoomManager {
   createRoom(
     roomCode: string,
     sessionId: string,
-    questions: { id: string; type: string; prompt: string; imageUrl: string | null; options: string; correctIndex: number; timeLimit: number | null }[],
+    questions: { id: string; type: string; prompt: string; imageUrl: string | null; options: string; correctIndex: number; correctIndexes: string | null; timeLimit: number | null }[],
     basePoints: number,
     activityTimeLimit: number | null
   ): RoomState {
-    const parsedQuestions: QuestionData[] = questions.map((q, index) => ({
-      id: q.id,
-      type: q.type,
-      prompt: q.prompt,
-      imageUrl: q.imageUrl,
-      options: q.options ? JSON.parse(q.options) : [],
-      correctIndex: q.correctIndex,
-      timeLimit: q.timeLimit || activityTimeLimit || 30,
-      questionIndex: index,
-    }))
+    const parsedQuestions: QuestionData[] = questions.map((q, index) => {
+      // Parsear correctIndexes con fallback a correctIndex
+      let correctIndexes: number[] = []
+      if (q.correctIndexes) {
+        correctIndexes = JSON.parse(q.correctIndexes)
+      } else if (q.correctIndex !== null) {
+        correctIndexes = [q.correctIndex]
+      }
+
+      return {
+        id: q.id,
+        type: q.type,
+        prompt: q.prompt,
+        imageUrl: q.imageUrl,
+        options: q.options ? JSON.parse(q.options) : [],
+        correctIndex: correctIndexes[0] ?? 0, // Compatibilidad hacia atrás
+        correctIndexes,
+        timeLimit: q.timeLimit || activityTimeLimit || 30,
+        questionIndex: index,
+      }
+    })
 
     const state: RoomState = {
       roomCode,
@@ -135,7 +146,7 @@ class RoomManager {
       return { success: false, score: 0, isCorrect: false }
     }
 
-    const isCorrect = selectedIndex === question.correctIndex
+    const isCorrect = question.correctIndexes.includes(selectedIndex)
 
     let score = 0
     if (isCorrect) {

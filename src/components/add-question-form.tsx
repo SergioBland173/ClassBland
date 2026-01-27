@@ -35,7 +35,7 @@ export function AddQuestionForm({
   const [options, setOptions] = useState(['', '', '', ''])
   const [imageOptions, setImageOptions] = useState<string[]>([])
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
-  const [correctIndex, setCorrectIndex] = useState(0)
+  const [correctIndexes, setCorrectIndexes] = useState<number[]>([0])
   const [timeLimit, setTimeLimit] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const questionImageInputRef = useRef<HTMLInputElement>(null)
@@ -139,22 +139,45 @@ export function AddQuestionForm({
     if (options.length > 2) {
       const newOptions = options.filter((_, i) => i !== index)
       setOptions(newOptions)
-      if (correctIndex >= newOptions.length) {
-        setCorrectIndex(newOptions.length - 1)
-      } else if (correctIndex > index) {
-        setCorrectIndex(correctIndex - 1)
-      }
+      // Ajustar correctIndexes al eliminar una opción
+      setCorrectIndexes(prev => {
+        const updated = prev
+          .filter(i => i !== index) // Remover el índice eliminado
+          .map(i => i > index ? i - 1 : i) // Ajustar índices mayores
+        // Asegurar que siempre haya al menos uno seleccionado
+        if (updated.length === 0 && newOptions.length > 0) {
+          return [0]
+        }
+        return updated
+      })
     }
+  }
+
+  function toggleCorrectIndex(index: number) {
+    setCorrectIndexes(prev => {
+      if (prev.includes(index)) {
+        // No permitir deseleccionar si es el único
+        if (prev.length === 1) return prev
+        return prev.filter(i => i !== index)
+      } else {
+        return [...prev, index].sort((a, b) => a - b)
+      }
+    })
   }
 
   function removeImageOption(index: number) {
     const newOptions = imageOptions.filter((_, i) => i !== index)
     setImageOptions(newOptions)
-    if (correctIndex >= newOptions.length && newOptions.length > 0) {
-      setCorrectIndex(newOptions.length - 1)
-    } else if (correctIndex > index) {
-      setCorrectIndex(correctIndex - 1)
-    }
+    // Ajustar correctIndexes al eliminar una imagen
+    setCorrectIndexes(prev => {
+      const updated = prev
+        .filter(i => i !== index)
+        .map(i => i > index ? i - 1 : i)
+      if (updated.length === 0 && newOptions.length > 0) {
+        return [0]
+      }
+      return updated
+    })
   }
 
   function updateOption(index: number, value: string) {
@@ -168,7 +191,7 @@ export function AddQuestionForm({
     setQuestionImageUrl(null)
     setOptions(['', '', '', ''])
     setImageOptions([])
-    setCorrectIndex(0)
+    setCorrectIndexes([0])
     setTimeLimit('')
   }
 
@@ -211,13 +234,13 @@ export function AddQuestionForm({
 
       if (questionType === 'MULTIPLE_CHOICE') {
         payload.options = options.filter((o) => o.trim() !== '')
-        payload.correctIndex = correctIndex
+        payload.correctIndexes = correctIndexes
         if (questionImageUrl) {
           payload.imageUrl = questionImageUrl
         }
       } else if (questionType === 'IMAGE_CHOICE') {
         payload.options = imageOptions
-        payload.correctIndex = correctIndex
+        payload.correctIndexes = correctIndexes
       }
       // OPEN_TEXT no necesita opciones
 
@@ -401,21 +424,21 @@ export function AddQuestionForm({
       {/* Multiple Choice Options */}
       {questionType === 'MULTIPLE_CHOICE' && (
         <div className="space-y-2">
-          <Label>Opciones (haz clic para marcar la correcta)</Label>
+          <Label>Opciones (haz clic para marcar las correctas - puedes seleccionar varias)</Label>
           <div className="space-y-2">
             {options.map((option, index) => (
               <div key={index} className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setCorrectIndex(index)}
+                  onClick={() => toggleCorrectIndex(index)}
                   className={cn(
                     'flex-shrink-0 w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-colors',
-                    correctIndex === index
+                    correctIndexes.includes(index)
                       ? 'bg-success border-success text-success-foreground'
                       : 'border-border hover:border-success/50'
                   )}
                 >
-                  {correctIndex === index && <Check className="h-5 w-5" />}
+                  {correctIndexes.includes(index) && <Check className="h-5 w-5" />}
                 </button>
                 <Input
                   placeholder={`Opcion ${index + 1}`}
@@ -423,7 +446,7 @@ export function AddQuestionForm({
                   onChange={(e) => updateOption(index, e.target.value)}
                   disabled={isLoading}
                   className={cn(
-                    correctIndex === index && 'border-success'
+                    correctIndexes.includes(index) && 'border-success'
                   )}
                 />
                 {options.length > 2 && (
@@ -440,6 +463,11 @@ export function AddQuestionForm({
               </div>
             ))}
           </div>
+          {correctIndexes.length > 1 && (
+            <p className="text-sm text-muted-foreground">
+              {correctIndexes.length} respuestas correctas seleccionadas
+            </p>
+          )}
           {options.length < 6 && (
             <Button
               type="button"
@@ -469,7 +497,7 @@ export function AddQuestionForm({
       {/* Image Choice Options */}
       {questionType === 'IMAGE_CHOICE' && (
         <div className="space-y-4">
-          <Label>Imagenes (haz clic para marcar la correcta)</Label>
+          <Label>Imagenes (haz clic para marcar las correctas - puedes seleccionar varias)</Label>
 
           {/* Image Grid */}
           {imageOptions.length > 0 && (
@@ -479,11 +507,11 @@ export function AddQuestionForm({
                   key={index}
                   className={cn(
                     'relative aspect-square rounded-xl border-2 overflow-hidden cursor-pointer transition-all',
-                    correctIndex === index
+                    correctIndexes.includes(index)
                       ? 'border-success ring-2 ring-success'
                       : 'border-border hover:border-primary/50'
                   )}
-                  onClick={() => setCorrectIndex(index)}
+                  onClick={() => toggleCorrectIndex(index)}
                 >
                   <Image
                     src={imageUrl}
@@ -493,7 +521,7 @@ export function AddQuestionForm({
                     unoptimized
                   />
                   {/* Correct indicator */}
-                  {correctIndex === index && (
+                  {correctIndexes.includes(index) && (
                     <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-success flex items-center justify-center">
                       <Check className="h-5 w-5 text-success-foreground" />
                     </div>
@@ -519,6 +547,11 @@ export function AddQuestionForm({
                 </div>
               ))}
             </div>
+          )}
+          {correctIndexes.length > 1 && (
+            <p className="text-sm text-muted-foreground">
+              {correctIndexes.length} respuestas correctas seleccionadas
+            </p>
           )}
 
           {/* Upload button */}
