@@ -11,6 +11,7 @@ const createQuestionSchema = z.object({
   correctIndex: z.number().int().min(0).optional(), // Compatibilidad hacia atrás
   correctIndexes: z.array(z.number().int().min(0)).min(1).optional(), // Múltiples respuestas correctas
   timeLimit: z.number().int().positive().optional(),
+  doublePoints: z.boolean().default(false),
   order: z.number().int().default(1),
 })
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest, { params }: Props) {
       )
     }
 
-    const { prompt, type, imageUrl, options, correctIndex, correctIndexes, timeLimit, order } = result.data
+    const { prompt, type, imageUrl, options, correctIndex, correctIndexes, timeLimit, doublePoints, order } = result.data
 
     // Determinar los índices correctos (preferir correctIndexes si está presente)
     let finalCorrectIndexes: number[] = []
@@ -95,6 +96,7 @@ export async function POST(request: NextRequest, { params }: Props) {
         correctIndex: finalCorrectIndexes[0] ?? null, // Compatibilidad hacia atrás
         correctIndexes: finalCorrectIndexes.length > 0 ? JSON.stringify(finalCorrectIndexes) : null,
         timeLimit: timeLimit || null,
+        doublePoints,
         order,
         activityId,
       },

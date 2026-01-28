@@ -13,7 +13,7 @@ class RoomManager {
   createRoom(
     roomCode: string,
     sessionId: string,
-    questions: { id: string; type: string; prompt: string; imageUrl: string | null; options: string; correctIndex: number; correctIndexes: string | null; timeLimit: number | null }[],
+    questions: { id: string; type: string; prompt: string; imageUrl: string | null; options: string; correctIndex: number; correctIndexes: string | null; timeLimit: number | null; doublePoints: boolean }[],
     basePoints: number,
     activityTimeLimit: number | null
   ): RoomState {
@@ -35,6 +35,7 @@ class RoomManager {
         correctIndex: correctIndexes[0] ?? 0, // Compatibilidad hacia atrás
         correctIndexes,
         timeLimit: q.timeLimit || activityTimeLimit || 30,
+        doublePoints: q.doublePoints,
         questionIndex: index,
       }
     })
@@ -152,7 +153,8 @@ class RoomManager {
     if (isCorrect) {
       const timeLimit = question.timeLimit * 1000 // convertir a ms
       const timeFactor = Math.max(0.3, 1 - timeSpent / timeLimit)
-      score = Math.round(basePoints * timeFactor)
+      const pointsMultiplier = question.doublePoints ? 2 : 1
+      score = Math.round(basePoints * timeFactor * pointsMultiplier)
     }
 
     participantAnswers.set(questionIndex, {

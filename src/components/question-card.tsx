@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { Trash2, Clock, Check, Loader2, Pencil, X, Plus, Upload, ListChecks, MessageSquareText, ImageIcon } from 'lucide-react'
+import { Trash2, Clock, Check, Loader2, Pencil, X, Plus, Upload, ListChecks, MessageSquareText, ImageIcon, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type QuestionType = 'MULTIPLE_CHOICE' | 'OPEN_TEXT' | 'IMAGE_CHOICE'
@@ -22,6 +22,7 @@ interface Question {
   correctIndex: number | null
   correctIndexes: number[] | null
   timeLimit: number | null
+  doublePoints: boolean
   order: number
 }
 
@@ -67,6 +68,7 @@ export function QuestionCard({
   )
   const [editCorrectIndexes, setEditCorrectIndexes] = useState<number[]>(parsedCorrectIndexes)
   const [editTimeLimit, setEditTimeLimit] = useState(question.timeLimit?.toString() ?? '')
+  const [editDoublePoints, setEditDoublePoints] = useState(question.doublePoints)
   const [editQuestionImageUrl, setEditQuestionImageUrl] = useState<string | null>(question.imageUrl)
   const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false)
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
@@ -90,6 +92,7 @@ export function QuestionCard({
     }
     setEditCorrectIndexes(parsedCorrectIndexes)
     setEditTimeLimit(question.timeLimit?.toString() ?? '')
+    setEditDoublePoints(question.doublePoints)
     setIsEditing(true)
   }
 
@@ -264,6 +267,7 @@ export function QuestionCard({
         prompt: editPrompt,
         type: editType,
         timeLimit: editTimeLimit ? parseInt(editTimeLimit) : null,
+        doublePoints: editDoublePoints,
       }
 
       if (editType === 'MULTIPLE_CHOICE') {
@@ -631,6 +635,23 @@ export function QuestionCard({
             />
           </div>
 
+          {/* Double Points */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setEditDoublePoints(!editDoublePoints)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all text-sm',
+                editDoublePoints
+                  ? 'border-yellow-500 bg-yellow-500/10 text-yellow-600'
+                  : 'border-border hover:border-yellow-500/50'
+              )}
+            >
+              <Zap className={cn('h-4 w-4', editDoublePoints && 'fill-yellow-500')} />
+              <span className="font-medium">Puntos dobles</span>
+            </button>
+          </div>
+
           {/* Actions */}
           <div className="flex gap-2 pt-2">
             <Button onClick={handleSave} disabled={isSaving || !editPrompt}>
@@ -658,6 +679,12 @@ export function QuestionCard({
             {question.prompt}
           </CardTitle>
           <div className="flex items-center gap-2">
+            {question.doublePoints && (
+              <span className="flex items-center gap-1 text-xs text-yellow-600 bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                <Zap className="h-3 w-3 fill-yellow-500" />
+                x2
+              </span>
+            )}
             {question.timeLimit && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />

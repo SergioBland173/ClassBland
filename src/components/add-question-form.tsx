@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
-import { Loader2, Plus, Trash2, Check, ListChecks, MessageSquareText, ImageIcon, Upload, X } from 'lucide-react'
+import { Loader2, Plus, Trash2, Check, ListChecks, MessageSquareText, ImageIcon, Upload, X, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type QuestionType = 'MULTIPLE_CHOICE' | 'OPEN_TEXT' | 'IMAGE_CHOICE'
@@ -37,6 +37,7 @@ export function AddQuestionForm({
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const [correctIndexes, setCorrectIndexes] = useState<number[]>([0])
   const [timeLimit, setTimeLimit] = useState('')
+  const [doublePoints, setDoublePoints] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const questionImageInputRef = useRef<HTMLInputElement>(null)
 
@@ -193,6 +194,7 @@ export function AddQuestionForm({
     setImageOptions([])
     setCorrectIndexes([0])
     setTimeLimit('')
+    setDoublePoints(false)
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -229,6 +231,7 @@ export function AddQuestionForm({
         prompt,
         type: questionType,
         timeLimit: timeLimit ? parseInt(timeLimit) : undefined,
+        doublePoints,
         order: nextOrder,
       }
 
@@ -614,6 +617,27 @@ export function AddQuestionForm({
           disabled={isLoading}
           className="max-w-[200px]"
         />
+      </div>
+
+      {/* Double Points */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setDoublePoints(!doublePoints)}
+          disabled={isLoading}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
+            doublePoints
+              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-600'
+              : 'border-border hover:border-yellow-500/50'
+          )}
+        >
+          <Zap className={cn('h-5 w-5', doublePoints && 'fill-yellow-500')} />
+          <span className="font-medium">Puntos dobles</span>
+        </button>
+        {doublePoints && (
+          <span className="text-sm text-yellow-600">Esta pregunta vale el doble de puntos</span>
+        )}
       </div>
 
       <Button type="submit" disabled={isLoading || !prompt}>

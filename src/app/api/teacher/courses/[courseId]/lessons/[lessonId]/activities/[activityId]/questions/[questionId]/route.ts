@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     }
 
     const body = await request.json()
-    const { prompt, type, imageUrl, options, correctIndex, correctIndexes, timeLimit } = body
+    const { prompt, type, imageUrl, options, correctIndex, correctIndexes, timeLimit, doublePoints } = body
 
     // Validate required fields
     if (!prompt || !type) {
@@ -75,6 +75,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
         correctIndex: finalCorrectIndexes[0] ?? null, // Compatibilidad hacia atrás
         correctIndexes: finalCorrectIndexes.length > 0 ? JSON.stringify(finalCorrectIndexes) : null,
         timeLimit: timeLimit ?? null,
+        doublePoints: doublePoints ?? false,
       },
     })
 

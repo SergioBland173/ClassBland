@@ -17,6 +17,7 @@ export interface QuestionData {
   correctIndex: number // Deprecado: usar correctIndexes
   correctIndexes: number[] // Array de índices de respuestas correctas
   timeLimit: number
+  doublePoints: boolean
   questionIndex: number
 }
 
@@ -28,6 +29,7 @@ export interface QuestionDataForClient {
   imageUrl: string | null
   options: string[]
   timeLimit: number
+  doublePoints: boolean
   questionIndex: number
 }
 

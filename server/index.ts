@@ -152,6 +152,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
             correctIndex: q.correctIndex || 0,
             correctIndexes: q.correctIndexes,
             timeLimit: q.timeLimit,
+            doublePoints: q.doublePoints,
           })),
           session.activity.basePoints,
           session.activity.timeLimit
@@ -213,6 +214,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
             correctIndex: q.correctIndex || 0,
             correctIndexes: q.correctIndexes,
             timeLimit: q.timeLimit,
+            doublePoints: q.doublePoints,
           })),
           session.activity.basePoints,
           session.activity.timeLimit
@@ -276,6 +278,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
         imageUrl: question.imageUrl,
         options: question.options,
         timeLimit: question.timeLimit,
+        doublePoints: question.doublePoints,
         questionIndex: 0,
       }
 
@@ -452,6 +455,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
         imageUrl: question.imageUrl,
         options: question.options,
         timeLimit: question.timeLimit,
+        doublePoints: question.doublePoints,
         questionIndex: newIndex,
       }
 

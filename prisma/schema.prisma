@@ -123,6 +123,7 @@ model Question {
   correctIndexes String?  // JSON string: [0, 2] - índices de las respuestas correctas
   expectedAnswer String?
   timeLimit      Int?
+  doublePoints   Boolean  @default(false)  // Pregunta vale puntos dobles
   order          Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
