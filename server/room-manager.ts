@@ -75,12 +75,15 @@ class RoomManager {
 
     const existingIndex = room.state.participants.findIndex(p => p.odlsId === participant.odlsId)
     if (existingIndex >= 0) {
+      console.log(`[addParticipant] Updating existing participant: ${participant.nickname} (${participant.odlsId})`)
       room.state.participants[existingIndex] = { ...participant, isConnected: true }
     } else {
+      console.log(`[addParticipant] Adding new participant: ${participant.nickname} (${participant.odlsId})`)
       room.state.participants.push(participant)
       room.answers.set(participant.odlsId, new Map())
     }
 
+    console.log(`[addParticipant] Current answer keys:`, Array.from(room.answers.keys()))
     return true
   }
 
@@ -243,6 +246,39 @@ class RoomManager {
     if (room) {
       room.state.status = 'SHOWING_RESULTS'
     }
+  }
+
+  // Verifica si todos los participantes conectados han respondido la pregunta actual
+  allParticipantsAnswered(roomCode: string, questionIndex: number): boolean {
+    const room = this.rooms.get(roomCode)
+    if (!room) {
+      console.log('[allParticipantsAnswered] Room not found:', roomCode)
+      return false
+    }
+
+    const connectedParticipants = room.state.participants.filter(p => p.isConnected)
+    console.log('[allParticipantsAnswered] Connected participants:', connectedParticipants.map(p => ({ odlsId: p.odlsId, nickname: p.nickname })))
+
+    if (connectedParticipants.length === 0) {
+      console.log('[allParticipantsAnswered] No connected participants')
+      return false
+    }
+
+    // Mostrar todas las respuestas registradas
+    console.log('[allParticipantsAnswered] Answer keys in room:', Array.from(room.answers.keys()))
+
+    for (const participant of connectedParticipants) {
+      const participantAnswers = room.answers.get(participant.odlsId)
+      const hasAnswered = participantAnswers?.has(questionIndex) ?? false
+      console.log(`[allParticipantsAnswered] ${participant.nickname} (${participant.odlsId}): hasAnswerMap=${!!participantAnswers}, hasAnswered=${hasAnswered}`)
+
+      if (!participantAnswers || !hasAnswered) {
+        return false
+      }
+    }
+
+    console.log('[allParticipantsAnswered] ALL have answered!')
+    return true
   }
 
   endSession(roomCode: string): LeaderboardEntry[] {

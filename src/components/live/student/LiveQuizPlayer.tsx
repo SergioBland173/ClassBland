@@ -10,6 +10,7 @@ import { Leaderboard } from '../shared/Leaderboard'
 import { cn } from '@/lib/utils'
 import { Loader2, Check, X, Trophy, LogOut } from 'lucide-react'
 import Image from 'next/image'
+import { QuestionIntro } from '../shared/QuestionIntro'
 
 interface Question {
   id: string
@@ -18,6 +19,7 @@ interface Question {
   imageUrl: string | null
   options: string[]
   timeLimit: number
+  doublePoints?: boolean
   questionIndex: number
 }
 
@@ -51,6 +53,8 @@ export function LiveQuizPlayer({
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [myPosition, setMyPosition] = useState<number | null>(null)
   const [participantCount, setParticipantCount] = useState(0)
+  const [showIntro, setShowIntro] = useState(false)
+  const [totalQuestions, setTotalQuestions] = useState(0)
 
   useEffect(() => {
     console.log('LiveQuizPlayer effect - socket:', !!socket, 'isConnected:', isConnected)
@@ -62,6 +66,7 @@ export function LiveQuizPlayer({
     const unsubRoomState = on('room-state', (state: any) => {
       setStatus(state.status)
       setParticipantCount(state.participants.length)
+      setTotalQuestions(state.totalQuestions || 0)
       if (state.currentQuestion) {
         setCurrentQuestion(state.currentQuestion)
         setRemainingTime(state.currentQuestion.timeLimit)
@@ -71,11 +76,14 @@ export function LiveQuizPlayer({
     const unsubQuestionStarted = on('question-started', (data: any) => {
       setStatus('IN_PROGRESS')
       setCurrentQuestion(data.question)
-      setRemainingTime(data.question.timeLimit)
       setSelectedAnswer(null)
       setHasAnswered(false)
       setCorrectIndexes([])
-      setAnswerStartTime(Date.now())
+      if (data.totalQuestions) {
+        setTotalQuestions(data.totalQuestions)
+      }
+      // Mostrar intro antes de la pregunta
+      setShowIntro(true)
     })
 
     const unsubAnswerReceived = on('answer-received', (data: any) => {
@@ -151,6 +159,12 @@ export function LiveQuizPlayer({
     }
   }, [hasAnswered, currentQuestion, roomCode, emit])
 
+  const handleIntroComplete = useCallback(() => {
+    setShowIntro(false)
+    setRemainingTime(currentQuestion?.timeLimit || 30)
+    setAnswerStartTime(Date.now())
+  }, [currentQuestion])
+
   // Pantalla de espera
   if (status === 'WAITING') {
     return (
@@ -220,13 +234,25 @@ export function LiveQuizPlayer({
   // Durante la pregunta o mostrando resultados
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Intro de pregunta */}
+      {showIntro && currentQuestion && (
+        <QuestionIntro
+          questionNumber={currentQuestion.questionIndex + 1}
+          totalQuestions={totalQuestions}
+          prompt={currentQuestion.prompt}
+          timeLimit={currentQuestion.timeLimit}
+          doublePoints={currentQuestion.doublePoints}
+          onComplete={handleIntroComplete}
+        />
+      )}
+
       {/* Header con timer */}
       <div className="p-4 border-b bg-card">
         <div className="max-w-2xl mx-auto">
           <p className="text-sm text-muted-foreground text-center mb-2">
             Pregunta {(currentQuestion?.questionIndex || 0) + 1}
           </p>
-          {status === 'IN_PROGRESS' && currentQuestion && (
+          {status === 'IN_PROGRESS' && currentQuestion && !showIntro && (
             <CountdownTimer
               totalTime={currentQuestion.timeLimit}
               remainingTime={remainingTime}

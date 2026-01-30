@@ -285,6 +285,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
       liveNS.to(roomCode).emit('question-started', {
         question: questionForClients,
         questionIndex: 0,
+        totalQuestions: session.activity.questions.length,
         serverTime: Date.now(),
       })
 
@@ -374,7 +375,32 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
     }
 
     socket.emit('answer-received', { success: true })
-    console.log(`${socketData.odlsId} respondio pregunta ${questionIndex}: ${isCorrect ? 'correcto' : 'incorrecto'}`)
+    console.log(`[submit-answer] ${socketData.odlsId} respondio pregunta ${questionIndex}: ${isCorrect ? 'correcto' : 'incorrecto'}`)
+
+    // Auto-mostrar resultados si todos han respondido
+    console.log(`[submit-answer] Checking if all participants answered in room ${roomCode}...`)
+    const allAnswered = roomManager.allParticipantsAnswered(roomCode, questionIndex)
+    console.log(`[submit-answer] allAnswered = ${allAnswered}`)
+
+    if (allAnswered) {
+      console.log(`Todos respondieron en sala ${roomCode}, mostrando resultados automaticamente`)
+
+      roomManager.showResults(roomCode)
+
+      await prisma.liveSession.update({
+        where: { id: session.id },
+        data: { status: 'SHOWING_RESULTS' },
+      })
+
+      const stats = roomManager.getQuestionStats(roomCode, questionIndex)
+      const leaderboard = roomManager.getLeaderboard(roomCode, questionIndex)
+
+      liveNS.to(roomCode).emit('question-results', {
+        stats: stats!,
+        leaderboard: leaderboard.slice(0, 10),
+        correctIndexes,
+      })
+    }
   })
 
   // Profesor muestra resultados
@@ -462,6 +488,7 @@ liveNS.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEven
       liveNS.to(roomCode).emit('question-started', {
         question: questionForClients,
         questionIndex: newIndex,
+        totalQuestions: session.activity.questions.length,
         serverTime: Date.now(),
       })
 

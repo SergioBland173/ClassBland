@@ -85,6 +85,7 @@ export interface ServerToClientEvents {
   'question-started': (data: {
     question: QuestionDataForClient
     questionIndex: number
+    totalQuestions: number
     serverTime: number
   }) => void
   'time-sync': (data: { remainingTime: number; serverTime: number }) => void

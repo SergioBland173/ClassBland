@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
+import { QuestionIntro } from '../shared/QuestionIntro'
 
 interface Question {
   id: string
@@ -29,6 +30,7 @@ interface Question {
   options: string[]
   correctIndex: number
   timeLimit: number | null
+  doublePoints?: boolean
 }
 
 interface Participant {
@@ -81,6 +83,7 @@ export function LiveSessionControl({
   const [showResetDialog, setShowResetDialog] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
+  const [showIntro, setShowIntro] = useState(false)
 
   const currentQuestion = currentQuestionIndex >= 0 ? questions[currentQuestionIndex] : null
   const questionTimeLimit = currentQuestion?.timeLimit || timeLimit || 30
@@ -120,8 +123,9 @@ export function LiveSessionControl({
     const unsubQuestionStarted = on('question-started', (data: any) => {
       setStatus('IN_PROGRESS')
       setCurrentQuestionIndex(data.questionIndex)
-      setRemainingTime(data.question.timeLimit)
       setQuestionStats(null)
+      // Mostrar intro antes de la pregunta
+      setShowIntro(true)
     })
 
     const unsubQuestionResults = on('question-results', (data: any) => {
@@ -166,6 +170,11 @@ export function LiveSessionControl({
   const endSession = useCallback(() => {
     emit('teacher:end-session', { sessionId })
   }, [emit, sessionId])
+
+  const handleIntroComplete = useCallback(() => {
+    setShowIntro(false)
+    setRemainingTime(questionTimeLimit)
+  }, [questionTimeLimit])
 
   const closeSession = useCallback(async () => {
     setIsClosing(true)
@@ -270,6 +279,18 @@ export function LiveSessionControl({
 
   return (
     <div className="container mx-auto p-6">
+      {/* Intro de pregunta */}
+      {showIntro && currentQuestion && (
+        <QuestionIntro
+          questionNumber={currentQuestionIndex + 1}
+          totalQuestions={questions.length}
+          prompt={currentQuestion.prompt}
+          timeLimit={questionTimeLimit}
+          doublePoints={currentQuestion.doublePoints}
+          onComplete={handleIntroComplete}
+        />
+      )}
+
       {/* Dialogs */}
       <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
         <DialogContent>
@@ -372,7 +393,7 @@ export function LiveSessionControl({
                 </Button>
               )}
 
-              {status === 'IN_PROGRESS' && currentQuestion && (
+              {status === 'IN_PROGRESS' && currentQuestion && !showIntro && (
                 <>
                   <CountdownTimer
                     totalTime={questionTimeLimit}

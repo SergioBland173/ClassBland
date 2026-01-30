@@ -52,6 +52,7 @@ export default async function TeacherLiveSessionPage({ params }: Props) {
     options: q.options ? JSON.parse(q.options) : [],
     correctIndex: q.correctIndex || 0,
     timeLimit: q.timeLimit,
+    doublePoints: q.doublePoints,
   }))
 
   const participants = liveSession.participants.map((p) => ({
